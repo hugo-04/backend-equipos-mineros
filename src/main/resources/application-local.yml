@@ -1,0 +1,5 @@
+# Perfil para desarrollo en la máquina local: más logs para depurar.
+logging:
+  level:
+    com.mineria.equipos: DEBUG
+    org.hibernate.SQL: DEBUG

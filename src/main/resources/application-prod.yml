@@ -1,0 +1,11 @@
+# Perfil de producción: logs sobrios y Swagger apagable desde el entorno.
+logging:
+  level:
+    root: INFO
+    com.mineria.equipos: INFO
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
