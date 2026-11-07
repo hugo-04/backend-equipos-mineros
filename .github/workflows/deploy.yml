@@ -1,7 +1,7 @@
 name: Deploy
 
-# Despliega en cada push a main. También se puede lanzar a mano (workflow_dispatch) y,
-# con simulate_failure=true, DEMOSTRAR el rollback automático.
+# Despliega en cada push a main. También se puede lanzar a mano y, con simulate_failure=true,
+# sirve para demostrar el rollback automático.
 on:
   push:
     branches: [main]
@@ -14,7 +14,7 @@ on:
         type: boolean
         default: false
 
-# Nunca dos despliegues a la vez; el segundo espera al primero
+# Nunca dos despliegues a la vez: el segundo espera a que termine el primero
 concurrency:
   group: deploy-produccion
   cancel-in-progress: false
@@ -45,7 +45,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Credenciales desechables solo para este job: nada sale de los secrets de producción
+      # Credenciales desechables, solo para este job: no se usa ningún secret de producción
       - name: Preparar .env de prueba
         run: |
           {
@@ -98,7 +98,7 @@ jobs:
           java-version: '21'
           cache: maven
 
-      # A partir de aquí solo se PREPARA el entorno; toda la lógica de despliegue está en deploy.sh
+      # De acá en adelante solo se prepara el entorno; toda la lógica del despliegue está en deploy.sh
       - name: Instalar la CLI de Railway
         run: npm install -g @railway/cli
 
@@ -119,7 +119,7 @@ jobs:
           APP_URL: ${{ secrets.APP_URL }}
           # Solo se activa si se lanza a mano con simulate_failure=true
           SIMULATE_FAILURE: ${{ inputs.simulate_failure && 'health' || '' }}
-          # Railway tarda en construir y arrancar: más margen que el valor por defecto
+          # Railway tarda en construir y arrancar, así que se da más margen que el valor por defecto
           HEALTH_RETRIES: '24'
           HEALTH_INTERVAL: '5'
         run: ./deploy.sh

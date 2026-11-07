@@ -1,17 +1,17 @@
 name: CI
 
-# Se ejecuta en cada push y en cada pull request.
-# Las acciones están fijadas por SHA de commit (el comentario dice la versión); Dependabot las mantiene al día.
+# Corre en cada push y en cada pull request.
+# Las acciones están fijadas por el SHA del commit (el comentario de al lado dice la versión) y Dependabot las mantiene al día.
 on:
   push:
   pull_request:
 
-# Si llega un push nuevo a la misma rama, cancela la ejecución anterior
+# Si entra un push nuevo a la misma rama, se cancela la corrida anterior, que ya no sirve
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# Permisos mínimos por defecto; los jobs que necesitan más lo piden explícitamente
+# Permisos mínimos para todo; el job que necesite más lo pide por su cuenta
 permissions:
   contents: read
 
@@ -28,7 +28,7 @@ jobs:
           java-version: '21'
           cache: maven
 
-      # verify = compilar + pruebas + ArchUnit + JaCoCo. Falla si la cobertura baja del 90%.
+      # verify compila, corre las pruebas (incluido ArchUnit) y mide la cobertura con JaCoCo. Falla si baja del 90 %.
       - name: mvn verify
         run: mvn -B verify
 
@@ -46,12 +46,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      # Verifican éxito, rollback por health, falla del rollback, variable faltante e idempotencia
-      # usando un hosting simulado (no tocan ningún servicio real).
+      # Prueban el éxito, el rollback por health, el rollback que falla, la variable faltante y la idempotencia.
+      # Todo con un Railway simulado: no se toca ningún servicio real.
       - name: Probar deploy.sh con el hosting simulado
         run: ./scripts/test/deploy_test.sh
 
-  # A03: no se suben secretos al repositorio (revisa todo el historial)
+  # A03: comprueba que nadie haya subido un secreto al repositorio (revisa todo el historial)
   secretos:
     name: Escaneo de secretos (gitleaks)
     runs-on: ubuntu-latest
@@ -60,16 +60,16 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Para repositorios de una organización gitleaks pide la licencia en el secret GITLEAKS_LICENSE
+      # Si el repositorio es de una organización, gitleaks pide su licencia en el secret GITLEAKS_LICENSE
       - name: gitleaks
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 
-  # A03: vulnerabilidades conocidas en las dependencias y la imagen que realmente se despliega.
-  # Los hallazgos HIGH/CRITICAL con corrección disponible hacen fallar el pipeline.
-  # Los aceptados (con motivo) están en .trivyignore.
+  # A03: busca vulnerabilidades conocidas en las dependencias y en la imagen que de verdad se despliega.
+  # Un hallazgo HIGH o CRITICAL que ya tenga corrección hace fallar el pipeline.
+  # Los que se aceptaron, con su motivo, están en .trivyignore.
   imagen:
     name: Escaneo de dependencias e imagen (Trivy)
     runs-on: ubuntu-latest
@@ -89,8 +89,8 @@ jobs:
           exit-code: '1'
           trivyignores: .trivyignore
 
-  # A03: análisis estático de seguridad del código Java (SAST).
-  # En repositorios privados requiere GitHub Advanced Security; si no lo tienes, desactívalo creando la
+  # A03: análisis estático de seguridad del código Java (CodeQL).
+  # En repositorios privados necesita GitHub Advanced Security; si no lo tienes, apágalo creando la
   # variable del repositorio CODEQL_HABILITADO=false.
   codeql:
     name: CodeQL

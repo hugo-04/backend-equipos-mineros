@@ -25,7 +25,7 @@
         <openapi-generator.version>7.27.0</openapi-generator.version>
         <springdoc.version>2.8.17</springdoc.version>
         <jjwt.version>0.12.7</jjwt.version>
-        <!-- Versiones de dependencias transitivas de Spring Boot con CVE altos/críticos corregidos (ver docs/revision-seguridad-backend.md, A03) -->
+        <!-- Estas dependencias las trae Spring Boot, pero las subo a mano porque tenían CVE altos o críticos ya corregidos (mira docs/revision-seguridad-backend.md, A03) -->
         <tomcat.version>10.1.61</tomcat.version>
         <jackson-bom.version>2.21.8</jackson-bom.version>
         <archunit.version>1.5.1</archunit.version>
@@ -69,7 +69,7 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Swagger UI y las anotaciones que usan las interfaces generadas desde el contrato -->
+        <!-- Swagger UI y las anotaciones que necesitan las interfaces que se generan del contrato -->
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
@@ -111,7 +111,7 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- Los tests de repositorio corren sobre H2 en modo MySQL: no requieren Docker -->
+        <!-- Las pruebas de repositorio corren sobre H2 en modo MySQL, así que no hace falta Docker -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
@@ -127,7 +127,7 @@
 
     <build>
         <plugins>
-            <!-- Contract-first: las interfaces y DTOs salen de openapi.yaml, no se escriben a mano -->
+            <!-- El contrato manda: las interfaces y los DTOs se generan desde openapi.yaml, no se escriben a mano -->
             <plugin>
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
@@ -174,7 +174,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <release>${java.version}</release>
-                    <!-- El orden importa: lombok primero, luego el binding, y al final mapstruct -->
+                    <!-- El orden importa: primero lombok, después el binding y al final mapstruct -->
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
@@ -194,7 +194,7 @@
                     </annotationProcessorPaths>
                     <compilerArgs>
                         <arg>-Amapstruct.defaultComponentModel=spring</arg>
-                        <!-- Si un campo no se mapea, que sea una decision explicita y no un olvido -->
+                        <!-- Si un campo se queda sin mapear, que sea porque se decidió así y no por olvido -->
                         <arg>-Amapstruct.unmappedTargetPolicy=ERROR</arg>
                     </compilerArgs>
                 </configuration>
@@ -203,13 +203,13 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <!-- @{argLine} lo rellena JaCoCo; el otro flag evita el aviso de Mockito en JDK 21 -->
+                    <!-- JaCoCo rellena @{argLine}; lo demás es para que Mockito no suelte avisos en JDK 21 -->
                     <argLine>@{argLine} -XX:+EnableDynamicAgentLoading -Xshare:off</argLine>
                 </configuration>
             </plugin>
             <!--
-                Cobertura minima: si baja de jacoco.minimo (90%) en instrucciones o ramas, "mvn verify" falla.
-                Se excluye solo lo generado (OpenAPI) y la clase Application. Lo generado por Lombok se filtra solo (lombok.config).
+                Cobertura mínima: si baja del 90 % (jacoco.minimo), en instrucciones o en ramas, mvn verify falla.
+                Solo se excluye lo que genera OpenAPI y la clase Application; lo de Lombok se filtra solo (mira lombok.config).
             -->
             <plugin>
                 <groupId>org.jacoco</groupId>

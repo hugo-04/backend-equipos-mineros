@@ -1,7 +1,7 @@
-# Hallazgos aceptados del escaneo de la imagen (Trivy). Cada uno debe tener motivo y condición de revisión.
+# Hallazgos del escaneo de la imagen (Trivy) que se aceptaron a propósito. Cada uno lleva su motivo y cuándo volver a mirarlo.
 #
-# Spring Framework 6.2.19 es la última versión de la rama 6.2; estos CVE solo tienen corrección en la 7.x
-# (es decir, Spring Boot 4). NO aplican a este servicio: es una API REST/JSON y no usa XsltView
-# ni vistas con Server-Sent Events. Revisar al migrar a Spring Boot 4 o si aparece un parche 6.2.x.
+# Spring Framework 6.2.19 es la última versión de la rama 6.2 y estos CVE solo se corrigen en la 7.x (o sea, Spring Boot 4).
+# No nos afectan: esto es una API REST con JSON y no usa XsltView ni vistas con Server-Sent Events.
+# Hay que revisarlo al migrar a Spring Boot 4 o si sale un parche 6.2.x.
 CVE-2026-47884
 CVE-2026-47890
