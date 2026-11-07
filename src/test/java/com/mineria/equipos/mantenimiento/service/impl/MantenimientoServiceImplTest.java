@@ -1,6 +1,9 @@
 package com.mineria.equipos.mantenimiento.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import com.mineria.equipos.generated.model.PaginaMantenimientoResponse;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.PageRequest;
@@ -162,5 +165,41 @@ class MantenimientoServiceImplTest {
         Pageable pagina = PageRequest.of(0, 20);
         assertThatThrownBy(() -> service.listarPorEquipo(4L, pagina)).isInstanceOf(EquipoNotFoundException.class);
         verify(repository, never()).findByEquipoIdOrderByFechaDescIdDesc(4L, pagina);
+    }
+
+    @ParameterizedTest(name = "notas \"{0}\" se guarda como nula")
+    @NullSource
+    @ValueSource(strings = {"", "   ", "\t\n"})
+    @DisplayName("registrar: las notas vacías, nulas o con solo espacios se guardan como nulas")
+    void notasSinTextoSeGuardanNulas(String notas) {
+        // Arrange
+        when(equipoService.reiniciarCiclo(8L)).thenReturn(new BigDecimal("310.5"));
+        when(repository.saveAndFlush(any(Mantenimiento.class))).thenReturn(guardadoConId(21L));
+        when(repository.findProjectedById(21L)).thenReturn(Optional.of(Datos.mantenimientoProjection(21L, 8L, "310.5")));
+
+        // Act
+        service.registrar(8L, new MantenimientoRequest().notas(notas));
+
+        // Assert
+        ArgumentCaptor<Mantenimiento> historial = ArgumentCaptor.forClass(Mantenimiento.class);
+        verify(repository).saveAndFlush(historial.capture());
+        assertThat(historial.getValue().getNotas()).isNull();
+    }
+
+    @Test
+    @DisplayName("registrar: quita los espacios al principio y al final de las notas")
+    void notasSeRecortan() {
+        // Arrange
+        when(equipoService.reiniciarCiclo(8L)).thenReturn(new BigDecimal("310.5"));
+        when(repository.saveAndFlush(any(Mantenimiento.class))).thenReturn(guardadoConId(21L));
+        when(repository.findProjectedById(21L)).thenReturn(Optional.of(Datos.mantenimientoProjection(21L, 8L, "310.5")));
+
+        // Act
+        service.registrar(8L, new MantenimientoRequest().notas("  Cambio de filtros  "));
+
+        // Assert
+        ArgumentCaptor<Mantenimiento> historial = ArgumentCaptor.forClass(Mantenimiento.class);
+        verify(repository).saveAndFlush(historial.capture());
+        assertThat(historial.getValue().getNotas()).isEqualTo("Cambio de filtros");
     }
 }

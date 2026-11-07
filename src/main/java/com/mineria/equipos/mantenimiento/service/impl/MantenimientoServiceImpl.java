@@ -43,7 +43,7 @@ public class MantenimientoServiceImpl implements MantenimientoService {
             // de ese momento, que es el que se guarda en el historial
             BigDecimal horometro = equipoService.reiniciarCiclo(equipoId);
             Mantenimiento guardado = repository.saveAndFlush(
-                    mapper.toEntity(equipoId, horometro, request.getNotas(), clock.instant()));
+                    mapper.toEntity(equipoId, horometro, normalizarNotas(request.getNotas()), clock.instant()));
 
             log.info("Mantenimiento registrado: equipoId={}, horometro={}", equipoId, guardado.getHorometroAlRegistrar());
             return repository.findProjectedById(guardado.getId())
@@ -57,6 +57,14 @@ public class MantenimientoServiceImpl implements MantenimientoService {
             log.error("Fallo inesperado al registrar el mantenimiento del equipo {}", equipoId, e);
             throw e;
         }
+    }
+
+    /** Las notas son opcionales: sin texto (o solo con espacios) se guardan como nulas, no como cadena vacía. */
+    private String normalizarNotas(String notas) {
+        if (notas == null || notas.isBlank()) {
+            return null;
+        }
+        return notas.strip();
     }
 
     /**
