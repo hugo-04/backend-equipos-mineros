@@ -1,4 +1,4 @@
-# Perfil de producción: logs sobrios y Swagger apagable desde el entorno.
+# Perfil de producción: logs sobrios y Swagger APAGADO por defecto (se enciende con SWAGGER_ENABLED=true).
 logging:
   level:
     root: INFO
@@ -6,6 +6,6 @@ logging:
 
 springdoc:
   api-docs:
-    enabled: ${SWAGGER_ENABLED:true}
+    enabled: ${SWAGGER_ENABLED:false}
   swagger-ui:
-    enabled: ${SWAGGER_ENABLED:true}
+    enabled: ${SWAGGER_ENABLED:false}
