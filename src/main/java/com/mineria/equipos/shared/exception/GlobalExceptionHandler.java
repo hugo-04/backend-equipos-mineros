@@ -21,8 +21,8 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import tools.jackson.databind.DatabindException;
+import tools.jackson.databind.exc.UnrecognizedPropertyException;
 import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
 import com.mineria.equipos.shared.exception.DomainException;
@@ -138,8 +138,8 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             return cuerpo(responder(HttpStatus.BAD_REQUEST, PROPIEDAD_DESCONOCIDA,
                     "El cuerpo contiene propiedades que la API no reconoce", http, List.of(detalle)));
         }
-        if (ex.getCause() instanceof JsonMappingException mapeo && !mapeo.getPath().isEmpty()) {
-            String campo = mapeo.getPath().get(mapeo.getPath().size() - 1).getFieldName();
+        if (ex.getCause() instanceof DatabindException mapeo && !mapeo.getPath().isEmpty()) {
+            String campo = mapeo.getPath().get(mapeo.getPath().size() - 1).getPropertyName();
             ErrorDetail detalle = errores.detalle(campo, "valor con tipo o formato incorrecto");
             return cuerpo(responder(HttpStatus.BAD_REQUEST, JSON_INVALIDO,
                     "El cuerpo de la petición tiene un valor inválido", http, List.of(detalle)));

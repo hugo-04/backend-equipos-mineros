@@ -4,7 +4,7 @@ spring:
     name: equipos-mineros
   autoconfigure:
     # El login es con JWT contra nuestra tabla usuario. Se excluye esto para que Spring no cree su usuario por defecto con clave aleatoria.
-    exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
   web:
     locale: es
     locale-resolver: fixed
