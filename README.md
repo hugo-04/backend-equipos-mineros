@@ -173,8 +173,7 @@ desconocidas y JSON malformado se rechazan; un número enviado como texto (`"12"
 **Seguridad:** JWT stateless (HS256). Todo requiere `Authorization: Bearer <token>` salvo `/auth/login`, `/health` y Swagger
 (Swagger solo está abierto fuera de producción). Los 401/403 salen con el mismo `ErrorResponse`.
 
-Revisión completa contra OWASP Top 10:2025 (estado inicial, corrección y estado final de cada punto):
-[`docs/revision-seguridad-backend.md`](docs/revision-seguridad-backend.md). Resumen de lo aplicado:
+Medidas aplicadas tras la revisión contra OWASP Top 10:2025:
 
 | Medida | Detalle |
 |---|---|
