@@ -21,7 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.mineria.equipos.domain.model.Rol;
+import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.generated.model.MantenimientoRequest;
 import com.mineria.equipos.mantenimiento.service.MantenimientoService;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;

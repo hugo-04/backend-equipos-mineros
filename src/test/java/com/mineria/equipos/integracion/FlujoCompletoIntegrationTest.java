@@ -19,7 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.jayway.jsonpath.JsonPath;
-import com.mineria.equipos.domain.model.Rol;
+import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.testsupport.Tokens;
 
 /**

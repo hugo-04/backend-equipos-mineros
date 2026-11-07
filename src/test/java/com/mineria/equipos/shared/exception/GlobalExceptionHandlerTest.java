@@ -31,7 +31,7 @@ import org.springframework.web.context.request.ServletWebRequest;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
-import com.mineria.equipos.domain.model.Rol;
+import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.ErroresDePruebaController;
 import com.mineria.equipos.testsupport.Tokens;

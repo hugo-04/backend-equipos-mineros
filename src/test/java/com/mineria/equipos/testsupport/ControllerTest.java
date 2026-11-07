@@ -13,12 +13,11 @@ import org.springframework.test.context.ActiveProfiles;
 
 import com.mineria.equipos.shared.exception.ErrorResponseFactory;
 import com.mineria.equipos.shared.exception.GlobalExceptionHandler;
-import com.mineria.equipos.infrastructure.adapter.in.web.mapper.AuthWebMapperImpl;
 import com.mineria.equipos.shared.config.ApplicationConfig;
 import com.mineria.equipos.shared.config.CorsConfig;
-import com.mineria.equipos.infrastructure.security.JwtService;
-import com.mineria.equipos.infrastructure.security.SecurityConfig;
-import com.mineria.equipos.infrastructure.security.SecurityErrorHandlers;
+import com.mineria.equipos.auth.security.JwtService;
+import com.mineria.equipos.auth.security.SecurityConfig;
+import com.mineria.equipos.auth.security.SecurityErrorHandlers;
 
 /**
  * Prueba de controllers con MockMvc: levanta solo la capa web real (controllers, mappers, seguridad JWT,
@@ -31,8 +30,7 @@ import com.mineria.equipos.infrastructure.security.SecurityErrorHandlers;
 @ActiveProfiles("test")
 @Import({
         SecurityConfig.class, SecurityErrorHandlers.class, JwtService.class, CorsConfig.class,
-        ApplicationConfig.class, ErrorResponseFactory.class, GlobalExceptionHandler.class,
-        AuthWebMapperImpl.class
+        ApplicationConfig.class, ErrorResponseFactory.class, GlobalExceptionHandler.class
 })
 public @interface ControllerTest {
 

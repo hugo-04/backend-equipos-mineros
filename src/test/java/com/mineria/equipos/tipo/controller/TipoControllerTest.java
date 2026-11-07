@@ -14,7 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.mineria.equipos.domain.model.Rol;
+import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.generated.model.TipoEquipoResponse;
 import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.Tokens;

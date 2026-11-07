@@ -6,7 +6,7 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
-import com.mineria.equipos.domain.model.Rol;
+import com.mineria.equipos.auth.entity.Rol;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;

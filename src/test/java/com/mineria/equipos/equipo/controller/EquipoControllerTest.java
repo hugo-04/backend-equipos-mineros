@@ -36,7 +36,7 @@ import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.shared.exception.HorometroInvalidoException;
 import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
-import com.mineria.equipos.domain.model.Rol;
+import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.Tokens;

@@ -3,8 +3,6 @@ package com.mineria.equipos.testsupport;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.mineria.equipos.domain.model.Rol;
-import com.mineria.equipos.domain.model.Usuario;
 import com.mineria.equipos.equipo.entity.Equipo;
 import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
 import com.mineria.equipos.generated.model.EquipoResponse;
@@ -57,10 +55,6 @@ public final class Datos {
 
     public static MantenimientoResponse mantenimientoResponse(Long id, Long equipoId, String horometro) {
         return new MantenimientoResponse(id, equipoId, AHORA, new BigDecimal(horometro)).notas("Cambio de aceite");
-    }
-
-    public static Usuario admin() {
-        return Usuario.builder().id(1L).username("admin").passwordHash("$2a$hash").rol(Rol.ADMIN).build();
     }
 
     /** Implementación simple de la proyección de equipos para armar casos de prueba. */
