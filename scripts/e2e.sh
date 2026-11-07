@@ -27,9 +27,10 @@ request() {
   CUERPO="$(cat "$CUERPO_FILE")"
 }
 
-# campo NOMBRE: saca el primer valor simple del JSON de la última respuesta
+# campo NOMBRE: saca el PRIMER valor simple con ese nombre en el JSON de la última respuesta
+# (grep -o + head -1: así "id" es el del equipo y no el del "tipo" anidado que viene después)
 campo() {
-  printf '%s' "$CUERPO" | sed -n 's/.*"'"$1"'":\("[^"]*"\|[^,}]*\).*/\1/p' | head -1 | tr -d '"'
+  printf '%s' "$CUERPO" | grep -o '"'"$1"'":\("[^"]*"\|[^,}]*\)' | head -1 | sed 's/^[^:]*://' | tr -d '"'
 }
 
 verificar() {
