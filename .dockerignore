@@ -1,0 +1,14 @@
+# Nada de esto hace falta para construir la imagen (y .env jamás debe entrar)
+.git
+.github
+.idea
+.vscode
+.env
+.env.*
+target
+scripts
+docs
+*.md
+Makefile
+deploy.sh
+docker-compose*.yml
