@@ -60,6 +60,8 @@ app:
     # Frena la fuerza bruta del login: fallos permitidos por IP dentro de la ventana (luego 429 + Retry-After)
     login-max-intentos: ${LOGIN_MAX_INTENTOS:10}
     login-ventana-segundos: ${LOGIN_VENTANA_SEGUNDOS:300}
+    # Tamaño máximo del cuerpo de una petición (bytes): más grande => 413
+    cuerpo-max-bytes: ${CUERPO_MAX_BYTES:16384}
   # Tag de la imagen que está corriendo; lo expone /health para validar los despliegues
   version: ${APP_VERSION:dev}
   jwt:

@@ -1,0 +1,53 @@
+package com.mineria.equipos.shared.config;
+
+import java.io.IOException;
+
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.mineria.equipos.shared.exception.ErrorResponseWriter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * Rechaza con 413 las peticiones cuyo cuerpo supera el máximo permitido (por defecto 16 KB, de sobra para un JSON
+ * de esta API) antes de que Jackson intente leerlo. También rechaza los cuerpos sin Content-Length declarado
+ * (Transfer-Encoding: chunked), porque no se puede saber su tamaño de antemano. Solo mira los métodos que llevan cuerpo.
+ */
+@Slf4j
+@RequiredArgsConstructor
+public class LimiteCuerpoFilter extends OncePerRequestFilter {
+
+    static final String CODIGO = "CUERPO_DEMASIADO_GRANDE";
+
+    private final long maxBytes;
+    private final ErrorResponseWriter escritor;
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String metodo = request.getMethod();
+        return !(HttpMethod.POST.matches(metodo) || HttpMethod.PUT.matches(metodo) || HttpMethod.PATCH.matches(metodo));
+    }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
+        long declarado = request.getContentLengthLong();
+        boolean sinLongitud = declarado < 0 && request.getHeader("Transfer-Encoding") != null;
+        if (declarado > maxBytes || sinLongitud) {
+            log.warn("Cuerpo rechazado en {} {}: content-length={}, máximo={}", request.getMethod(),
+                    request.getRequestURI(), declarado, maxBytes);
+            escritor.escribir(response, HttpStatus.PAYLOAD_TOO_LARGE, CODIGO,
+                    "El cuerpo de la petición supera el tamaño máximo permitido (" + maxBytes + " bytes)",
+                    request.getRequestURI());
+            return;
+        }
+        chain.doFilter(request, response);
+    }
+}

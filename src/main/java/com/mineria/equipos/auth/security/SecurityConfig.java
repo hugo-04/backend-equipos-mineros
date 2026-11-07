@@ -22,6 +22,8 @@ import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.mineria.equipos.shared.config.LimiteCuerpoFilter;
+import com.mineria.equipos.shared.config.SecurityProperties;
 import com.mineria.equipos.shared.exception.ErrorResponseWriter;
 
 import lombok.RequiredArgsConstructor;
@@ -46,6 +48,7 @@ public class SecurityConfig {
     private final SecurityErrorHandlers securityErrorHandlers;
     private final LoginRateLimiter loginRateLimiter;
     private final ErrorResponseWriter escritor;
+    private final SecurityProperties seguridad;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -79,6 +82,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(securityErrorHandlers))
                 // Los filtros se crean aquí y no como @Bean: así Spring Boot no los registra dos veces
                 .addFilterBefore(new LoginRateLimitFilter(loginRateLimiter, escritor), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new LimiteCuerpoFilter(seguridad.cuerpoMaxBytes(), escritor), LoginRateLimitFilter.class)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
