@@ -1,6 +1,7 @@
 name: CI
 
 # Se ejecuta en cada push y en cada pull request.
+# Las acciones están fijadas por SHA de commit (el comentario dice la versión); Dependabot las mantiene al día.
 on:
   push:
   pull_request:
@@ -10,6 +11,7 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+# Permisos mínimos por defecto; los jobs que necesitan más lo piden explícitamente
 permissions:
   contents: read
 
@@ -18,9 +20,9 @@ jobs:
     name: Build, pruebas y cobertura
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
         with:
           distribution: temurin
           java-version: '21'
@@ -32,7 +34,7 @@ jobs:
 
       - name: Guardar el reporte de cobertura
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: reporte-jacoco
           path: target/site/jacoco
@@ -42,9 +44,78 @@ jobs:
     name: Pruebas de deploy.sh y su rollback
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       # Verifican éxito, rollback por health, falla del rollback, variable faltante e idempotencia
       # usando un hosting simulado (no tocan ningún servicio real).
       - name: Probar deploy.sh con el hosting simulado
         run: ./scripts/test/deploy_test.sh
+
+  # A03: no se suben secretos al repositorio (revisa todo el historial)
+  secretos:
+    name: Escaneo de secretos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Para repositorios de una organización gitleaks pide la licencia en el secret GITLEAKS_LICENSE
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # A03: vulnerabilidades conocidas en las dependencias y la imagen que realmente se despliega.
+  # Los hallazgos HIGH/CRITICAL con corrección disponible hacen fallar el pipeline.
+  # Los aceptados (con motivo) están en .trivyignore.
+  imagen:
+    name: Escaneo de dependencias e imagen (Trivy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Construir la imagen
+        run: docker build --build-arg APP_VERSION=ci -t equipos-mineros:ci .
+
+      - name: Trivy sobre la imagen
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: equipos-mineros:ci
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: .trivyignore
+
+  # A03: análisis estático de seguridad del código Java (SAST).
+  # En repositorios privados requiere GitHub Advanced Security; si no lo tienes, desactívalo creando la
+  # variable del repositorio CODEQL_HABILITADO=false.
+  codeql:
+    name: CodeQL
+    if: ${{ vars.CODEQL_HABILITADO != 'false' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      - name: Iniciar CodeQL
+        uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: java-kotlin
+          build-mode: manual
+
+      - name: Compilar para el análisis
+        run: mvn -B -DskipTests package
+
+      - name: Analizar
+        uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
