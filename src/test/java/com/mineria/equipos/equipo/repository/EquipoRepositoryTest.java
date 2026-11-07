@@ -31,12 +31,7 @@ class EquipoRepositoryTest {
     private EntityManager entityManager;
 
     private Equipo nuevo(String codigo, long tipoId, String horometro) {
-        Equipo equipo = new Equipo();
-        equipo.setCodigo(codigo);
-        equipo.setTipoId(tipoId);
-        equipo.setHorometro(new BigDecimal(horometro));
-        equipo.darDeAlta(Datos.AHORA);
-        return equipo;
+        return Datos.nuevoEquipo(codigo, tipoId, horometro);
     }
 
     @Test
@@ -66,7 +61,7 @@ class EquipoRepositoryTest {
         Equipo guardado = repository.saveAndFlush(nuevo("CAM-010", 1L, "10.0"));
 
         // Act
-        guardado.actualizar("CAM-010", 1L, new BigDecimal("55.5"));
+        guardado.setHorometro(new BigDecimal("55.5"));
         repository.saveAndFlush(guardado);
         entityManager.clear();
         Equipo recuperado = repository.findById(guardado.getId()).orElseThrow();

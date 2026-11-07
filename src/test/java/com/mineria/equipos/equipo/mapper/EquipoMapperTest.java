@@ -69,7 +69,7 @@ class EquipoMapperTest {
     }
 
     @Test
-    @DisplayName("request -> entidad: copia código, tipo y horómetro y deja sin fijar id, ciclo y fecha")
+    @DisplayName("request -> entidad: copia código, tipo y horómetro y deja sin fijar id, ciclo y fecha (lo fija el service)")
     void requestAEntidad() {
         // Arrange
         EquipoRequest request = new EquipoRequest("CAM-001", 2L, new BigDecimal("12.5"));
@@ -83,7 +83,39 @@ class EquipoMapperTest {
         assertThat(entidad.getHorometro()).isEqualByComparingTo("12.5");
         assertThat(entidad.getId()).isNull();
         assertThat(entidad.getCreadoEn()).isNull();
-        assertThat(entidad.getHorometroUltimoMant()).isEqualByComparingTo("0");
+        assertThat(entidad.getHorometroUltimoMant()).isNull();
+    }
+
+    @Test
+    @DisplayName("actualizar: copia código, tipo y horómetro sobre la entidad sin tocar id, ciclo ni fecha")
+    void actualizaLaEntidadExistente() {
+        // Arrange
+        Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
+        existente.setHorometroUltimoMant(new BigDecimal("40.0"));
+
+        // Act
+        mapper.actualizar(new EquipoRequest("EXC-009", 2L, new BigDecimal("150.0")), existente);
+
+        // Assert
+        assertThat(existente.getCodigo()).isEqualTo("EXC-009");
+        assertThat(existente.getTipoId()).isEqualTo(2L);
+        assertThat(existente.getHorometro()).isEqualByComparingTo("150.0");
+        assertThat(existente.getId()).isEqualTo(3L);
+        assertThat(existente.getHorometroUltimoMant()).isEqualByComparingTo("40.0");
+        assertThat(existente.getCreadoEn()).isEqualTo(Datos.AHORA);
+    }
+
+    @Test
+    @DisplayName("actualizar sin request no cambia la entidad")
+    void actualizarSinRequest() {
+        // Arrange
+        Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
+
+        // Act
+        mapper.actualizar(null, existente);
+
+        // Assert
+        assertThat(existente.getCodigo()).isEqualTo("CAM-003");
     }
 
     @Test

@@ -87,6 +87,32 @@ class EquipoServiceImplTest {
     }
 
     @Test
+    @DisplayName("crear: el ciclo arranca en 0 aunque la entidad llegue con otro valor y se guarda la fecha")
+    void crearArrancaElCicloEnCero() {
+        // Arrange
+        when(repository.existsByCodigo("CAM-006")).thenReturn(false);
+        when(repository.saveAndFlush(any(Equipo.class))).thenAnswer(inv -> {
+            Equipo e = inv.getArgument(0);
+            e.setId(6L);
+            return e;
+        });
+        when(repository.buscarProyeccionPorId(6L))
+                .thenReturn(Optional.of(Datos.equipoProjection(6L, "CAM-006", "80.5", "0", 250)));
+
+        // Act
+        service.crear(request("CAM-006", 2L, "80.5"));
+
+        // Assert
+        ArgumentCaptor<Equipo> guardado = ArgumentCaptor.forClass(Equipo.class);
+        verify(repository).saveAndFlush(guardado.capture());
+        assertThat(guardado.getValue().getCodigo()).isEqualTo("CAM-006");
+        assertThat(guardado.getValue().getTipoId()).isEqualTo(2L);
+        assertThat(guardado.getValue().getHorometro()).isEqualByComparingTo("80.5");
+        assertThat(guardado.getValue().getHorometroUltimoMant()).isEqualByComparingTo("0");
+        assertThat(guardado.getValue().getCreadoEn()).isEqualTo(Datos.AHORA);
+    }
+
+    @Test
     @DisplayName("crear: falla con TipoEquipoNotFoundException si el tipo no existe")
     void crearTipoInexistente() {
         // Arrange
@@ -120,6 +146,19 @@ class EquipoServiceImplTest {
         // Act + Assert
         assertThatThrownBy(() -> service.crear(request("CAM-005", 1L, "-1")))
                 .isInstanceOf(HorometroInvalidoException.class);
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    @DisplayName("crear: un horómetro nulo también es inválido")
+    void crearHorometroNulo() {
+        // Arrange
+        when(repository.existsByCodigo("CAM-005")).thenReturn(false);
+
+        // Act + Assert
+        assertThatThrownBy(() -> service.crear(new EquipoRequest("CAM-005", 1L, null)))
+                .isInstanceOf(HorometroInvalidoException.class)
+                .hasMessageContaining("mayor o igual a 0");
         verify(repository, never()).saveAndFlush(any());
     }
 
@@ -195,6 +234,56 @@ class EquipoServiceImplTest {
     }
 
     @Test
+    @DisplayName("actualizar: cambia código y tipo sin tocar el ciclo de mantenimiento ni la fecha de creación")
+    void actualizaCodigoYTipoSinTocarElCiclo() {
+        // Arrange
+        Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
+        existente.setHorometroUltimoMant(new BigDecimal("40.0"));
+        when(repository.findById(3L)).thenReturn(Optional.of(existente));
+        when(repository.buscarProyeccionPorId(3L))
+                .thenReturn(Optional.of(Datos.equipoProjection(3L, "EXC-009", "150.0", "40.0", 500)));
+
+        // Act
+        service.actualizar(3L, request("EXC-009", 2L, "150.0"));
+
+        // Assert
+        assertThat(existente.getCodigo()).isEqualTo("EXC-009");
+        assertThat(existente.getTipoId()).isEqualTo(2L);
+        assertThat(existente.getHorometro()).isEqualByComparingTo("150.0");
+        assertThat(existente.getHorometroUltimoMant()).isEqualByComparingTo("40.0");
+        assertThat(existente.getCreadoEn()).isEqualTo(Datos.AHORA);
+        assertThat(existente.getId()).isEqualTo(3L);
+    }
+
+    @Test
+    @DisplayName("actualizar: permite dejar el mismo horómetro")
+    void actualizarPermiteIgual() {
+        // Arrange
+        Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
+        when(repository.findById(3L)).thenReturn(Optional.of(existente));
+        when(repository.buscarProyeccionPorId(3L))
+                .thenReturn(Optional.of(Datos.equipoProjection(3L, "CAM-003", "100.0", "0", 250)));
+
+        // Act + Assert
+        assertThatCode(() -> service.actualizar(3L, request("CAM-003", 1L, "100.0"))).doesNotThrowAnyException();
+        verify(repository).saveAndFlush(existente);
+    }
+
+    @Test
+    @DisplayName("actualizar: rechaza un horómetro negativo")
+    void actualizarRechazaNegativo() {
+        // Arrange
+        Equipo existente = Datos.equipo(3L, "CAM-003", "0.0");
+        when(repository.findById(3L)).thenReturn(Optional.of(existente));
+
+        // Act + Assert
+        assertThatThrownBy(() -> service.actualizar(3L, request("CAM-003", 1L, "-1")))
+                .isInstanceOf(HorometroInvalidoException.class)
+                .hasMessageContaining("mayor o igual a 0");
+        verify(repository, never()).saveAndFlush(any());
+    }
+
+    @Test
     @DisplayName("actualizar: falla con EquipoNotFoundException si el equipo no existe")
     void actualizarEquipoInexistente() {
         // Arrange
@@ -226,7 +315,8 @@ class EquipoServiceImplTest {
 
         // Act + Assert
         assertThatThrownBy(() -> service.actualizar(3L, request("CAM-003", 1L, "99.9")))
-                .isInstanceOf(HorometroInvalidoException.class);
+                .isInstanceOf(HorometroInvalidoException.class)
+                .hasMessageContaining("no puede bajar");
         verify(repository, never()).saveAndFlush(any());
         assertThat(existente.getHorometro()).isEqualByComparingTo("100.0");
     }

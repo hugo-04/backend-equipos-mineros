@@ -3,10 +3,13 @@ package com.mineria.equipos.testsupport;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.mineria.equipos.auth.entity.Rol;
+import com.mineria.equipos.auth.entity.Usuario;
 import com.mineria.equipos.equipo.entity.Equipo;
 import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
 import com.mineria.equipos.generated.model.EquipoResponse;
 import com.mineria.equipos.generated.model.MantenimientoResponse;
+import com.mineria.equipos.mantenimiento.entity.Mantenimiento;
 import com.mineria.equipos.mantenimiento.repository.projection.MantenimientoProjection;
 import com.mineria.equipos.generated.model.TipoEquipoResponse;
 
@@ -31,6 +34,34 @@ public final class Datos {
         equipo.setHorometroUltimoMant(BigDecimal.ZERO);
         equipo.setCreadoEn(AHORA);
         return equipo;
+    }
+
+    /** Equipo nuevo sin guardar: como lo deja el alta (ciclo de mantenimiento en 0 y fecha de creación fija). */
+    public static Equipo nuevoEquipo(String codigo, long tipoId, String horometro) {
+        Equipo equipo = new Equipo();
+        equipo.setCodigo(codigo);
+        equipo.setTipoId(tipoId);
+        equipo.setHorometro(new BigDecimal(horometro));
+        equipo.setHorometroUltimoMant(BigDecimal.ZERO);
+        equipo.setCreadoEn(AHORA);
+        return equipo;
+    }
+
+    public static Mantenimiento mantenimiento(Long equipoId, String horometro, String notas, Instant fecha) {
+        Mantenimiento mantenimiento = new Mantenimiento();
+        mantenimiento.setEquipoId(equipoId);
+        mantenimiento.setHorometroAlRegistrar(new BigDecimal(horometro));
+        mantenimiento.setNotas(notas);
+        mantenimiento.setFecha(fecha);
+        return mantenimiento;
+    }
+
+    public static Usuario usuario(String username, String passwordHash, Rol rol) {
+        Usuario usuario = new Usuario();
+        usuario.setUsername(username);
+        usuario.setPasswordHash(passwordHash);
+        usuario.setRol(rol);
+        return usuario;
     }
 
     /** Proyección de lectura de un equipo con los datos de su tipo (Camión) ya unidos. */

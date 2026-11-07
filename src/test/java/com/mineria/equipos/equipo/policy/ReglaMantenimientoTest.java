@@ -2,25 +2,46 @@ package com.mineria.equipos.equipo.policy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
+import static org.mockito.Mockito.when;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mineria.equipos.equipo.entity.Equipo;
+import com.mineria.equipos.equipo.repository.EquipoRepository;
+import com.mineria.equipos.equipo.service.impl.EquipoServiceImpl;
 
 /**
  * Prueba específica de la regla de mantenimiento:
  * requiere = (horometro - horometroUltimoMant) >= intervaloHoras del tipo.
  * Cubre justo debajo del intervalo, exactamente en el intervalo, por encima, y el reinicio del ciclo.
  */
+@ExtendWith(MockitoExtension.class)
 class ReglaMantenimientoTest {
 
     private static final int INTERVALO_CAMION = 250;
 
     private final MantenimientoPolicy policy = new IntervaloMantenimientoPolicy();
+
+    @Mock
+    private EquipoRepository repository;
+
+    private EquipoServiceImpl service;
+
+    @BeforeEach
+    void setUp() {
+        // Solo se usa el reinicio del ciclo, que únicamente necesita el repositorio
+        service = new EquipoServiceImpl(repository, null, null, null);
+    }
 
     private boolean requiere(Equipo equipo) {
         return policy.requiereMantenimiento(equipo.getHorometro(), equipo.getHorometroUltimoMant(), INTERVALO_CAMION);
@@ -84,9 +105,10 @@ class ReglaMantenimientoTest {
         // Arrange: equipo que ya pasó el intervalo
         Equipo vencido = equipoConHorometro("300.0");
         assertThat(requiere(vencido)).isTrue();
+        when(repository.findById(10L)).thenReturn(Optional.of(vencido));
 
-        // Act: se reinicia el ciclo (lo que hace el servicio al registrar el mantenimiento)
-        vencido.reiniciarCicloMantenimiento();
+        // Act: el servicio de equipos reinicia el ciclo (lo que ocurre al registrar el mantenimiento)
+        service.reiniciarCiclo(10L);
 
         // Assert: el último mantenimiento queda en el horómetro actual
         assertThat(vencido.getHorometroUltimoMant()).isEqualByComparingTo("300.0");
@@ -98,12 +120,13 @@ class ReglaMantenimientoTest {
     void nuevoCicloDespuesDelReinicio() {
         // Arrange: ciclo reiniciado en 300 h
         Equipo equipo = equipoConHorometro("300.0");
-        equipo.reiniciarCicloMantenimiento();
+        when(repository.findById(10L)).thenReturn(Optional.of(equipo));
+        service.reiniciarCiclo(10L);
 
         // Act: el equipo trabaja 249.9 h más y luego llega justo a 250 h del último mantenimiento
-        equipo.actualizar("CAM-001", 1L, new BigDecimal("549.9"));
+        equipo.setHorometro(new BigDecimal("549.9"));
         boolean casiVencido = requiere(equipo);
-        equipo.actualizar("CAM-001", 1L, new BigDecimal("550.0"));
+        equipo.setHorometro(new BigDecimal("550.0"));
         boolean vencido = requiere(equipo);
 
         // Assert
@@ -128,6 +151,7 @@ class ReglaMantenimientoTest {
         equipo.setCodigo("CAM-001");
         equipo.setTipoId(1L);
         equipo.setHorometro(new BigDecimal(horometro));
+        equipo.setHorometroUltimoMant(BigDecimal.ZERO);
         return equipo;
     }
 }

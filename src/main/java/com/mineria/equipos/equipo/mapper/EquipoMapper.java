@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -40,6 +41,12 @@ public abstract class EquipoMapper {
     @Mapping(target = "horometroUltimoMant", ignore = true)
     @Mapping(target = "creadoEn", ignore = true)
     public abstract Equipo toEntity(EquipoRequest request);
+
+    // Edición: copia código, tipo y horómetro sobre la entidad existente (id, ciclo y fecha no se tocan)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "horometroUltimoMant", ignore = true)
+    @Mapping(target = "creadoEn", ignore = true)
+    public abstract void actualizar(EquipoRequest request, @MappingTarget Equipo equipo);
 
     @Named("requiereMantenimiento")
     protected boolean requiereMantenimiento(EquipoProjection p) {

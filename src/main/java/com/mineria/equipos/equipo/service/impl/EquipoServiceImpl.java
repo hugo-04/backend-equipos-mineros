@@ -19,14 +19,16 @@ import com.mineria.equipos.generated.model.EquipoResponse;
 import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.DomainException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.HorometroInvalidoException;
 import com.mineria.equipos.tipo.service.TipoService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Casos de uso de equipos. Coordina las búsquedas y el guardado; las reglas propias del equipo
- * (el horómetro no baja, reinicio del ciclo) viven en la entidad y la de mantenimiento en la política.
+ * Casos de uso de equipos. Aquí viven todas las reglas de negocio del equipo (el horómetro no puede ser
+ * negativo ni bajar, el ciclo de mantenimiento arranca en 0 y se reinicia al registrar un mantenimiento);
+ * la entidad solo guarda datos y la regla "requiere mantenimiento" vive en la política.
  * Para saber si un tipo existe le pregunta a {@link TipoService}, nunca al repositorio del módulo tipo.
  */
 @Slf4j
@@ -63,8 +65,11 @@ public class EquipoServiceImpl implements EquipoService {
                 throw new CodigoDuplicadoException(request.getCodigo());
             }
 
+            // Alta: el horómetro no puede ser negativo y el ciclo de mantenimiento arranca en 0
+            validarHorometroNoNegativo(request.getHorometro());
             Equipo nuevo = mapper.toEntity(request);
-            nuevo.darDeAlta(clock.instant());
+            nuevo.setHorometroUltimoMant(BigDecimal.ZERO);
+            nuevo.setCreadoEn(clock.instant());
             Equipo guardado = guardar(nuevo);
             log.info("Equipo creado: id={}, codigo={}", guardado.getId(), guardado.getCodigo());
             return consultar(guardado.getId());
@@ -85,14 +90,14 @@ public class EquipoServiceImpl implements EquipoService {
             Equipo equipo = repository.findById(id).orElseThrow(() -> new EquipoNotFoundException(id));
             tipoService.verificarExiste(request.getTipoId());
 
-            // Lanza HorometroInvalidoException si el nuevo valor es menor al actual (antes de tocar nada)
-            equipo.validarHorometroNuevo(request.getHorometro());
+            // Regla de negocio: el horómetro no puede bajar (se valida antes de tocar la entidad)
+            validarHorometroNoBaja(equipo.getHorometro(), request.getHorometro());
 
             if (repository.existsByCodigoAndIdNot(request.getCodigo(), id)) {
                 throw new CodigoDuplicadoException(request.getCodigo());
             }
 
-            equipo.actualizar(request.getCodigo(), request.getTipoId(), request.getHorometro());
+            mapper.actualizar(request, equipo);
             guardar(equipo);
             log.info("Equipo actualizado: id={}, horometro={}", id, equipo.getHorometro());
             return consultar(id);
@@ -135,10 +140,26 @@ public class EquipoServiceImpl implements EquipoService {
     @Transactional
     public BigDecimal reiniciarCiclo(Long id) {
         Equipo equipo = repository.findById(id).orElseThrow(() -> new EquipoNotFoundException(id));
-        BigDecimal horometro = equipo.reiniciarCicloMantenimiento();
+        // El horómetro actual pasa a ser el del último mantenimiento: el ciclo vuelve a empezar
+        BigDecimal horometro = equipo.getHorometro();
+        equipo.setHorometroUltimoMant(horometro);
         repository.saveAndFlush(equipo);
         log.info("Ciclo de mantenimiento reiniciado: equipoId={}, horometro={}", id, horometro);
         return horometro;
+    }
+
+    private void validarHorometroNoNegativo(BigDecimal horometro) {
+        if (horometro == null || horometro.signum() < 0) {
+            throw new HorometroInvalidoException("El horómetro debe ser un número mayor o igual a 0");
+        }
+    }
+
+    private void validarHorometroNoBaja(BigDecimal actual, BigDecimal nuevo) {
+        validarHorometroNoNegativo(nuevo);
+        if (nuevo.compareTo(actual) < 0) {
+            throw new HorometroInvalidoException(
+                    "El horómetro no puede bajar: actual " + actual + ", recibido " + nuevo);
+        }
     }
 
     private EquipoResponse consultar(Long id) {
