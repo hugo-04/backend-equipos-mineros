@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mineria.equipos.auth.entity.Rol;
-import com.mineria.equipos.auth.entity.Usuario;
 import com.mineria.equipos.auth.mapper.AuthMapper;
 import com.mineria.equipos.auth.repository.UsuarioRepository;
 import com.mineria.equipos.auth.security.JwtService;
@@ -70,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
             log.info("El administrador '{}' ya existe, no se crea de nuevo", username);
             return false;
         }
-        usuarioRepository.save(Usuario.nuevo(username, passwordEncoder.encode(password), Rol.ADMIN));
+        usuarioRepository.save(mapper.toEntity(username, passwordEncoder.encode(password), Rol.ADMIN));
         log.info("Administrador inicial '{}' creado", username);
         return true;
     }

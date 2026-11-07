@@ -138,7 +138,7 @@ class AuthServiceImplTest {
     void noRecreaAlAdministrador() {
         // Arrange
         when(usuarioRepository.findByUsername("admin"))
-                .thenReturn(Optional.of(Usuario.nuevo("admin", "$2a$hash", Rol.ADMIN)));
+                .thenReturn(Optional.of(Datos.usuario("admin", "$2a$hash", Rol.ADMIN)));
 
         // Act
         boolean creado = service.asegurarAdministrador("admin", "otra");

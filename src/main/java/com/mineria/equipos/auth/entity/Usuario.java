@@ -12,7 +12,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Usuario que puede iniciar sesión (fila de la tabla usuario). Nunca guarda la contraseña en claro, solo su hash BCrypt. */
+/** Usuario que puede iniciar sesión (fila de la tabla usuario). Nunca guarda la contraseña en claro, solo su hash BCrypt.
+ * Solo guarda datos: la lógica de login vive en {@code AuthService}. */
 @Getter
 @Setter
 @NoArgsConstructor
@@ -33,12 +34,4 @@ public class Usuario {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Rol rol;
-
-    public static Usuario nuevo(String username, String passwordHash, Rol rol) {
-        Usuario usuario = new Usuario();
-        usuario.username = username;
-        usuario.passwordHash = passwordHash;
-        usuario.rol = rol;
-        return usuario;
-    }
 }

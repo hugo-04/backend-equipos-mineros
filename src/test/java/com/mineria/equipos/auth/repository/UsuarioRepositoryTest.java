@@ -12,6 +12,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 
 import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.auth.entity.Usuario;
+import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.PersistenciaTest;
 
 @PersistenciaTest
@@ -24,7 +25,7 @@ class UsuarioRepositoryTest {
     @DisplayName("guarda y busca por username")
     void guardaYBusca() {
         // Arrange
-        Usuario nuevo = Usuario.nuevo("operador1", "$2a$hash", Rol.OPERADOR);
+        Usuario nuevo = Datos.usuario("operador1", "$2a$hash", Rol.OPERADOR);
 
         // Act
         Usuario guardado = repository.saveAndFlush(nuevo);
@@ -42,10 +43,10 @@ class UsuarioRepositoryTest {
     @DisplayName("BD: el username es único")
     void usernameUnico() {
         // Arrange
-        repository.saveAndFlush(Usuario.nuevo("repetido", "$2a$h1", Rol.ADMIN));
+        repository.saveAndFlush(Datos.usuario("repetido", "$2a$h1", Rol.ADMIN));
 
         // Act + Assert
-        assertThatThrownBy(() -> repository.saveAndFlush(Usuario.nuevo("repetido", "$2a$h2", Rol.OPERADOR)))
+        assertThatThrownBy(() -> repository.saveAndFlush(Datos.usuario("repetido", "$2a$h2", Rol.OPERADOR)))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

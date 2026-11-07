@@ -1,12 +1,19 @@
 package com.mineria.equipos.auth.mapper;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+
+import com.mineria.equipos.auth.entity.Rol;
+import com.mineria.equipos.auth.entity.Usuario;
 
 import com.mineria.equipos.generated.model.LoginResponse;
 
-/** Arma la respuesta del login a partir del token emitido y sus datos. */
+/** Arma la respuesta del login y la entidad de un usuario nuevo. */
 @Mapper
 public interface AuthMapper {
 
     LoginResponse toLoginResponse(String accessToken, String tokenType, Long expiresIn);
+
+    @Mapping(target = "id", ignore = true)
+    Usuario toEntity(String username, String passwordHash, Rol rol);
 }

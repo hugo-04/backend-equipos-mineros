@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
 import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.auth.entity.Usuario;
+import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.auth.repository.UsuarioRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -33,7 +34,7 @@ class UsuarioDetailsServiceTest {
     void cargaElUsuario() {
         // Arrange
         when(usuarioRepository.findByUsername("admin"))
-                .thenReturn(Optional.of(Usuario.nuevo("admin", "$2a$hash", Rol.ADMIN)));
+                .thenReturn(Optional.of(Datos.usuario("admin", "$2a$hash", Rol.ADMIN)));
 
         // Act
         UserDetails detalles = service.loadUserByUsername("admin");
