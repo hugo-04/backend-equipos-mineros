@@ -1,4 +1,4 @@
-package com.mineria.equipos.domain.model;
+package com.mineria.equipos.mantenimiento.entity;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class MantenimientoTest {
 
     @Test
-    @DisplayName("registrarPara: guarda el horómetro del equipo, el equipo y las notas")
+    @DisplayName("registrarPara: guarda el horómetro del equipo, el equipo, las notas y la fecha")
     void registrarParaCopiaElHorometroDelEquipo() {
         // Arrange
         Instant fecha = Instant.parse("2026-05-01T08:30:00Z");

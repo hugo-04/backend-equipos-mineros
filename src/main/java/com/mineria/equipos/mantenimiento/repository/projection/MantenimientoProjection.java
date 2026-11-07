@@ -1,9 +1,9 @@
-package com.mineria.equipos.infrastructure.adapter.out.persistence.repository;
+package com.mineria.equipos.mantenimiento.repository.projection;
 
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Proyección de lectura de una línea del historial de mantenimientos. */
+/** Proyección de solo lectura de una línea del historial de mantenimientos. */
 public interface MantenimientoProjection {
 
     Long getId();

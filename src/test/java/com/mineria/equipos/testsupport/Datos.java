@@ -3,12 +3,13 @@ package com.mineria.equipos.testsupport;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.mineria.equipos.application.view.MantenimientoView;
 import com.mineria.equipos.domain.model.Rol;
 import com.mineria.equipos.domain.model.Usuario;
 import com.mineria.equipos.equipo.entity.Equipo;
 import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.MantenimientoResponse;
+import com.mineria.equipos.mantenimiento.repository.projection.MantenimientoProjection;
 import com.mineria.equipos.generated.model.TipoEquipoResponse;
 
 import lombok.Builder;
@@ -48,14 +49,14 @@ public final class Datos {
                 BigDecimal.ZERO, requiere, requiere ? "Requiere mantenimiento" : "OK", AHORA);
     }
 
-    public static MantenimientoView mantenimientoView(Long id, Long equipoId, String horometro) {
-        return MantenimientoView.builder()
-                .id(id)
-                .equipoId(equipoId)
-                .fecha(AHORA)
-                .horometroAlRegistrar(new BigDecimal(horometro))
-                .notas("Cambio de aceite")
-                .build();
+    public static MantenimientoProjection mantenimientoProjection(Long id, Long equipoId, String horometro) {
+        return MantenimientoProyeccion.builder()
+                .id(id).equipoId(equipoId).fecha(AHORA)
+                .horometroAlRegistrar(new BigDecimal(horometro)).notas("Cambio de aceite").build();
+    }
+
+    public static MantenimientoResponse mantenimientoResponse(Long id, Long equipoId, String horometro) {
+        return new MantenimientoResponse(id, equipoId, AHORA, new BigDecimal(horometro)).notas("Cambio de aceite");
     }
 
     public static Usuario admin() {
@@ -74,5 +75,16 @@ public final class Datos {
         BigDecimal horometro;
         BigDecimal horometroUltimoMant;
         Instant creadoEn;
+    }
+
+    /** Implementación simple de la proyección del historial para armar casos de prueba. */
+    @Value
+    @Builder
+    public static class MantenimientoProyeccion implements MantenimientoProjection {
+        Long id;
+        Long equipoId;
+        Instant fecha;
+        BigDecimal horometroAlRegistrar;
+        String notas;
     }
 }
