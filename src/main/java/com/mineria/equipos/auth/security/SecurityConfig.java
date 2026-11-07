@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.mineria.equipos.shared.exception.ErrorResponseWriter;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -25,6 +27,8 @@ public class SecurityConfig {
 
     private final JwtService jwtService;
     private final SecurityErrorHandlers securityErrorHandlers;
+    private final LoginRateLimiter loginRateLimiter;
+    private final ErrorResponseWriter escritor;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -44,7 +48,8 @@ public class SecurityConfig {
                 .exceptionHandling(errores -> errores
                         .authenticationEntryPoint(securityErrorHandlers)
                         .accessDeniedHandler(securityErrorHandlers))
-                // El filtro se crea aquí y no como @Bean: así Spring Boot no lo registra dos veces
+                // Los filtros se crean aquí y no como @Bean: así Spring Boot no los registra dos veces
+                .addFilterBefore(new LoginRateLimitFilter(loginRateLimiter, escritor), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

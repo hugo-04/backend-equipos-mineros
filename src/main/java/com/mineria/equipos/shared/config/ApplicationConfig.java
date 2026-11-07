@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration;
  * (inyectable para poder fijar la hora en las pruebas).
  */
 @Configuration
-@EnableConfigurationProperties(AppProperties.class)
+@EnableConfigurationProperties({AppProperties.class, SecurityProperties.class})
 public class ApplicationConfig {
 
     @Bean

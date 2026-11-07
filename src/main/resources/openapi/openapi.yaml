@@ -50,6 +50,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -325,6 +327,18 @@ components:
             $ref: '#/components/schemas/ErrorResponse'
     UnprocessableEntity:
       description: La petición es válida pero rompe una regla de negocio (por ejemplo, bajar el horómetro)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    TooManyRequests:
+      description: Demasiados intentos fallidos de inicio de sesión desde esta IP (ver el header Retry-After)
+      headers:
+        Retry-After:
+          description: Segundos que hay que esperar antes de volver a intentarlo
+          schema:
+            type: integer
+            format: int32
       content:
         application/json:
           schema:

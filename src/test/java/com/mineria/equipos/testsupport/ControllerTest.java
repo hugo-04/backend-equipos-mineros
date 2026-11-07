@@ -11,7 +11,9 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.context.ActiveProfiles;
 
+import com.mineria.equipos.auth.security.LoginRateLimiter;
 import com.mineria.equipos.shared.exception.ErrorResponseFactory;
+import com.mineria.equipos.shared.exception.ErrorResponseWriter;
 import com.mineria.equipos.shared.exception.GlobalExceptionHandler;
 import com.mineria.equipos.shared.config.ApplicationConfig;
 import com.mineria.equipos.shared.config.CorsConfig;
@@ -30,7 +32,8 @@ import com.mineria.equipos.auth.security.SecurityErrorHandlers;
 @ActiveProfiles("test")
 @Import({
         SecurityConfig.class, SecurityErrorHandlers.class, JwtService.class, CorsConfig.class,
-        ApplicationConfig.class, ErrorResponseFactory.class, GlobalExceptionHandler.class
+        ApplicationConfig.class, ErrorResponseFactory.class, ErrorResponseWriter.class, GlobalExceptionHandler.class,
+        LoginRateLimiter.class
 })
 public @interface ControllerTest {
 
