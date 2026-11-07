@@ -1,11 +1,11 @@
-# Entorno de desarrollo local: backend + MySQL.
-# Uso: copia .env.example a .env, ajusta los valores y ejecuta "docker compose up --build".
-# Nombre propio del proyecto: así los volúmenes no chocan con los de otros proyectos de la misma carpeta/nombre
+# Entorno para trabajar en local: el backend y su MySQL.
+# Para usarlo: copia .env.example a .env, rellena los valores y corre "docker compose up --build".
+# El proyecto tiene nombre propio para que sus volúmenes no se mezclen con los de otros proyectos de una carpeta con el mismo nombre.
 name: equipos-mineros
 
 services:
   db:
-    # Fijada por digest (inmutable); Dependabot propone la actualización
+    # Fijada por digest, que no cambia; Dependabot propone actualizarla cuando salga una nueva
     image: mysql:8.4@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902
     restart: unless-stopped
     environment:
@@ -16,7 +16,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      # El backend no arranca hasta que MySQL acepte conexiones
+      # El backend espera a que MySQL acepte conexiones antes de arrancar
       test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
       interval: 5s
       timeout: 5s
@@ -37,7 +37,7 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
       PORT: ${PORT:-8080}
-      # Dentro de la red de compose el host de la BD es el nombre del servicio
+      # En la red de compose, el host de la base es el nombre del servicio
       DB_URL: jdbc:mysql://db:3306/${DB_NAME:-equipos_mineros}?useSSL=false&allowPublicKeyRetrieval=true
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
