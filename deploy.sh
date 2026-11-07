@@ -1,25 +1,24 @@
 #!/usr/bin/env bash
-# =====================================================================================
-# deploy.sh - Despliegue con verificación y rollback automático.
+# deploy.sh: despliega el backend en Railway, comprueba que quedó sano y, si no, vuelve a la versión anterior.
 #
-# ÚNICA fuente de la lógica de despliegue: GitHub Actions solo prepara el entorno y
-# ejecuta este mismo script (también disponible como "make deploy").
+# Es la única lógica de despliegue. GitHub Actions solo prepara el entorno y ejecuta este mismo script
+# (también se puede correr a mano con "make deploy").
 #
-# Pasos:
-#   1. Verifica herramientas y variables de entorno
-#   2. mvn verify (pruebas + cobertura >= 90%)
-#   3. Construye la imagen y la etiqueta con el SHA corto del commit
-#   4. Guarda la versión que está desplegada ahora (para poder volver a ella)
-#   5. Despliega la versión nueva (las migraciones Flyway corren al arrancar la app)
-#   6. Verifica /health con reintentos y confirma que corre la versión nueva
-#   7. Si el paso 5 o 6 falla: ROLLBACK automático al tag guardado en el paso 4
+# Qué hace, en orden:
+#   1. Revisa que estén las herramientas y las variables de entorno.
+#   2. Corre mvn verify (pruebas y cobertura mínima de 90 %).
+#   3. Construye la imagen y la sube con el SHA corto del commit como tag.
+#   4. Anota qué versión está corriendo ahora, por si hay que volver a ella.
+#   5. Despliega la nueva en Railway (las migraciones de Flyway se aplican cuando la app arranca).
+#   6. Consulta /health con reintentos y confirma que la versión que responde es la nueva.
+#   7. Si falló el 5 o el 6, hace rollback al tag que se anotó en el paso 4.
 #
 # Códigos de salida:
-#   0  despliegue correcto
-#   1  error antes de tocar producción (variables, herramientas, pruebas, build)
-#   2  el despliegue falló y el ROLLBACK se ejecutó bien (producción quedó en la versión previa)
-#   3  el despliegue falló y NO había versión previa a la que volver (primer despliegue)
-#   4  el despliegue falló y el ROLLBACK TAMBIÉN falló (intervención manual urgente)
+#   0  salió bien
+#   1  falló antes de tocar producción (variables, herramientas, pruebas o build)
+#   2  el despliegue falló y el rollback funcionó: producción quedó en la versión anterior
+#   3  el despliegue falló y no había versión anterior a la que volver (primer despliegue)
+#   4  el despliegue falló y el rollback también: hay que intervenir a mano, ya
 #
 # Variables obligatorias:
 #   RAILWAY_TOKEN     token de proyecto de Railway
@@ -32,21 +31,20 @@
 #   HEALTH_INTERVAL      segundos entre intentos (por defecto 5)
 #   HEALTH_TIMEOUT       segundos máximos por petición (por defecto 5)
 #   DEPLOY_STATE_DIR     carpeta donde se guardan los tags (por defecto .deploy)
-#   SIMULATE_FAILURE     "health" fuerza que la verificación de la versión nueva falle,
-#                        para DEMOSTRAR el rollback. Desactivado por defecto.
-# =====================================================================================
+#   SIMULATE_FAILURE     con "health" la verificación de la versión nueva falla a propósito,
+#                        para demostrar el rollback. Viene apagado.
 set -Eeuo pipefail
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
-# ---------- Código de salida ----------
+# Códigos de salida (los mismos de la lista de arriba)
 readonly EXIT_OK=0
 readonly EXIT_PRECONDICION=1
 readonly EXIT_ROLLBACK_OK=2
 readonly EXIT_SIN_PREVIA=3
 readonly EXIT_ROLLBACK_FALLO=4
 
-# ---------- Configuración ----------
+# Valores por defecto; todos se pueden cambiar con variables de entorno
 HEALTH_RETRIES="${HEALTH_RETRIES:-10}"
 HEALTH_INTERVAL="${HEALTH_INTERVAL:-5}"
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-5}"
@@ -59,7 +57,7 @@ PREVIOUS_TAG=""
 HTTP_CODE=""
 HTTP_BODY=""
 
-# ---------- Utilidades de log ----------
+# Para escribir el log con fecha
 ahora() { date -u +'%Y-%m-%dT%H:%M:%SZ'; }
 log() { printf '[%s] %s\n' "$(ahora)" "$*"; }
 paso() {
@@ -68,7 +66,7 @@ paso() {
 }
 error() { printf '[%s] ERROR: %s\n' "$(ahora)" "$*" >&2; }
 
-# Si algo falla sin manejo explícito, dice QUÉ paso falló y en qué línea
+# Si algo falla sin que lo hayamos previsto, dice qué paso fue y en qué línea. Hasta el paso 5 no se tocó producción.
 al_fallar() {
   local codigo=$? linea=$1
   error "falló el paso \"$PASO_ACTUAL\" (línea $linea, código $codigo). No se tocó producción antes del paso 5."
@@ -76,7 +74,7 @@ al_fallar() {
 }
 trap 'al_fallar $LINENO' ERR
 
-# ---------- Paso 1: herramientas y variables ----------
+# Paso 1: revisar que estén las herramientas y las variables
 verificar_requisitos() {
   local faltan=0 herramienta variable
   for herramienta in git docker mvn railway curl; do
@@ -100,8 +98,7 @@ verificar_requisitos() {
   log "Herramientas y variables OK (servicio=$RAILWAY_SERVICE, imagen=$REGISTRY_IMAGE)"
 }
 
-# ---------- HTTP ----------
-# http_get URL -> deja el código en HTTP_CODE y el cuerpo en HTTP_BODY ("000" si no hubo respuesta)
+# Pide una URL y deja el código en HTTP_CODE y el cuerpo en HTTP_BODY ("000" si no hubo respuesta)
 http_get() {
   local salida
   salida="$(mktemp)"
@@ -114,7 +111,7 @@ version_de() {
   printf '%s' "$1" | sed -n 's/.*"version" *: *"\([^"]*\)".*/\1/p' | head -1
 }
 
-# ---------- Paso 4: versión desplegada ----------
+# Paso 4: averiguar qué versión está corriendo ahora, leyéndola del /health
 detectar_version_desplegada() {
   http_get "$APP_URL/health"
   local version
@@ -125,10 +122,9 @@ detectar_version_desplegada() {
   esac
 }
 
-# ---------- Despliegue en el hosting (Railway) ----------
-# Railway no permite elegir un tag de imagen desde su CLI, así que se sube una carpeta
-# con un Dockerfile de una línea (FROM <imagen>:<tag>). Desplegar y hacer rollback son
-# la MISMA operación con distinto tag: no hay dos caminos que mantener.
+# El despliegue en Railway. Con su CLI no se elige un tag de imagen directamente, así que se sube una carpeta
+# con un Dockerfile de una sola línea (FROM <imagen>:<tag>). Desplegar y hacer rollback son la misma
+# operación con otro tag, así que no hay dos caminos que mantener.
 desplegar_tag() {
   local tag="$1" carpeta
   carpeta="$(mktemp -d)"
@@ -142,14 +138,14 @@ desplegar_tag() {
   return "$resultado"
 }
 
-# ¿La versión que queremos desplegar ya está arriba y sana? (una sola consulta, sin reintentos)
+# Para no desplegar dos veces lo mismo: ¿la versión nueva ya está arriba y sana? Una sola consulta, sin reintentos.
 ya_desplegada_y_sana() {
   http_get "$APP_URL/health"
   [ "$HTTP_CODE" = "200" ] && [ "$(version_de "$HTTP_BODY")" = "$1" ]     && printf '%s' "$HTTP_BODY" | grep -q '"status" *: *"UP"'
 }
 
-# ---------- Paso 6: verificación ----------
-# esperar_salud TAG [simulada]
+# Paso 6: consultar /health hasta que responda UP con la versión esperada, o hasta que se acaben los intentos.
+# Uso: esperar_salud TAG [simulada]
 esperar_salud() {
   local esperado="$1" simulada="${2:-}" url intento version estado
   url="$APP_URL/health"
@@ -175,7 +171,7 @@ esperar_salud() {
   return 1
 }
 
-# ---------- Paso 7: rollback ----------
+# Paso 7: volver a la versión anterior. Es el mismo despliegue de siempre, solo que con el tag viejo.
 rollback() {
   local motivo="$1"
   trap - ERR
@@ -200,7 +196,7 @@ rollback() {
   exit "$EXIT_ROLLBACK_FALLO"
 }
 
-# =====================================================================================
+# El flujo completo, paso por paso
 main() {
   log "Inicio del despliegue"
   [ "$SIMULATE_FAILURE" = "health" ] &&
@@ -232,7 +228,7 @@ main() {
     log "No hay versión previa desplegada (primer despliegue): si algo falla NO habrá a qué volver."
   fi
 
-  # Idempotencia: ejecutarlo de nuevo sin cambios no vuelve a desplegar nada
+  # Si lo corren dos veces seguidas sin cambios, la segunda no redespliega nada
   if [ -z "$SIMULATE_FAILURE" ] && ya_desplegada_y_sana "$TAG"; then
     paso "5/7 Despliegue omitido: $TAG ya está en producción y sana (el script es idempotente)"
     printf '\n[%s] DESPLIEGUE OK: %s ya estaba desplegada y saludable. Nada que hacer.\n' "$(ahora)" "$TAG"

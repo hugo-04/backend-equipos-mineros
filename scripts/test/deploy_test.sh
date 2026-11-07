@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Pruebas automatizadas de deploy.sh, sin bats: un harness mínimo en bash.
+# Pruebas de deploy.sh, sin bats: un arnés mínimo hecho en bash.
 #
-# Se reemplazan git, docker, mvn, railway y curl por "mocks" que viven en un PATH temporal.
-# El mock de railway y el de curl comparten un "estado del hosting" (qué tag está corriendo),
-# así se simula un despliegue real, una versión que no levanta, un rollback que falla, etc.
+# git, docker, mvn, railway y curl se reemplazan por mocks que viven en un PATH temporal. El mock de railway
+# y el de curl comparten un "estado del hosting" (qué tag está corriendo), y con eso se simula un despliegue
+# normal, una versión que no levanta, un rollback que falla, etc. Nunca se toca Railway de verdad.
 #
 # Uso: ./scripts/test/deploy_test.sh        (sale con código != 0 si alguna prueba falla)
 set -uo pipefail
@@ -16,7 +16,7 @@ PASARON=0
 FALLARON=0
 FALLIDAS=()
 
-# ---------- Mocks ----------
+# Los mocks de las herramientas
 crear_mocks() {
   local bin="$1"
   mkdir -p "$bin"
@@ -90,7 +90,7 @@ MOCK
   chmod +x "$bin"/*
 }
 
-# ---------- Escenario ----------
+# Cada prueba arranca con su propio escenario limpio
 # nuevo_escenario [tag_en_produccion]
 nuevo_escenario() {
   ESC="$(mktemp -d "$TMP_BASE/esc.XXXX")"
@@ -117,7 +117,7 @@ ejecutar_deploy() {
   CODIGO=$?
 }
 
-# ---------- Aserciones ----------
+# Funciones para comprobar los resultados
 FALLO_ACTUAL=0
 fallo() { echo "      x $*"; FALLO_ACTUAL=1; }
 
@@ -158,7 +158,6 @@ prueba() {
   fi
 }
 
-# =====================================================================================
 # (1) despliegue exitoso -> exit 0
 t_exito() {
   nuevo_escenario "old1234"
@@ -321,7 +320,7 @@ t_no_filtra_secretos() {
   afirmar_salida_no_contiene "token-de-prueba"
 }
 
-# =====================================================================================
+# Ejecución de todas las pruebas
 PATH_ORIGINAL="$PATH"
 echo "== Pruebas de deploy.sh =="
 prueba "(1) despliegue exitoso termina en 0 y etiqueta con el SHA" t_exito

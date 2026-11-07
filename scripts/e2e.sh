@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Pruebas end-to-end contra un backend ya levantado (docker compose up).
-# Valida: /health, login, CRUD, regla de mantenimiento y los errores 401/400/404/409/422.
+# Pruebas end-to-end contra un backend que ya esté corriendo (docker compose up).
+# Recorre /health, login, el CRUD, la regla de mantenimiento y los errores 401, 400, 404, 409 y 422.
 #
 # Uso:  BASE_URL=http://localhost:8080 ADMIN_USER=admin ADMIN_PASSWORD=... ./scripts/e2e.sh
 set -euo pipefail
@@ -27,8 +27,8 @@ request() {
   CUERPO="$(cat "$CUERPO_FILE")"
 }
 
-# campo NOMBRE: saca el PRIMER valor simple con ese nombre en el JSON de la última respuesta
-# (grep -o + head -1: así "id" es el del equipo y no el del "tipo" anidado que viene después)
+# campo NOMBRE: saca el primer valor simple con ese nombre en el JSON de la última respuesta.
+# Se queda con el primero a propósito: así "id" es el del equipo y no el del "tipo" anidado que viene después.
 campo() {
   printf '%s' "$CUERPO" | grep -o '"'"$1"'":\("[^"]*"\|[^,}]*\)' | head -1 | sed 's/^[^:]*://' | tr -d '"'
 }
