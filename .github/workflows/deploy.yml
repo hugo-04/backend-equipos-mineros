@@ -52,7 +52,7 @@ jobs:
             echo "DB_USER=equipos"
             echo "DB_PASSWORD=$(openssl rand -hex 16)"
             echo "JWT_SECRET=$(openssl rand -hex 32)"
-            echo "JWT_EXPIRATION_MINUTES=60"
+            echo "JWT_EXPIRATION_MINUTES=30"
             echo "ADMIN_USER=admin-e2e"
             echo "ADMIN_PASSWORD=$(openssl rand -hex 16)"
             echo "CORS_ALLOWED_ORIGINS=http://localhost:3000"

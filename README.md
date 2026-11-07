@@ -141,18 +141,22 @@ Contrato completo y navegable en Swagger UI: `http://localhost:8080/swagger-ui.h
 |---|---|---|
 | `POST /auth/login` | pública | Devuelve el token JWT |
 | `GET /health` | pública | `{status:"UP",version}`; **503** si la BD no responde |
-| `GET /tipos` | JWT | Catálogo de tipos |
-| `GET /equipos` · `POST /equipos` | JWT | Listar (con estado de mantenimiento) · crear |
+| `GET /tipos` | JWT | Catálogo de tipos (paginado) |
+| `GET /equipos` · `POST /equipos` | JWT | Listar (paginado, con estado de mantenimiento) · crear |
 | `GET /equipos/{id}` · `PUT /equipos/{id}` | JWT | Consultar · editar (el horómetro no baja) |
 | `DELETE /equipos/{id}` | JWT con rol **ADMIN** | Elimina el equipo y su historial |
 | `POST /equipos/{id}/mantenimientos` | JWT | Registra el mantenimiento y reinicia el ciclo |
-| `GET /equipos/{id}/mantenimientos` | JWT | Historial (el más reciente primero) |
+| `GET /equipos/{id}/mantenimientos` | JWT | Historial (paginado, el más reciente primero) |
+
+**Paginación.** Los tres listados aceptan `?page=1&size=20` (`page` desde 1; `size` de 1 a 100, 20 por defecto; fuera de rango → `400`).
+Usan `Pageable`/`Page` de Spring Data y la respuesta es una clase propia generada del contrato:
+`{page, size, totalElements, totalPages, first, last, content[]}`.
 
 **Validaciones** (definidas en el contrato y generadas): `codigo` 3–30 caracteres `^[A-Za-z0-9-]+$`; `tipoId` entero > 0 y
 existente; `horometro` entre 0 y 999999.9 con **un decimal** como máximo; `notas` ≤ 500; `id` del path > 0; propiedades
 desconocidas y JSON malformado se rechazan; un número enviado como texto (`"12"`) también.
 
-**Errores:** todos usan `ErrorResponse`: `timestamp`, `status`, `error`, `code`, `message`, `path`, `details[{field,reason}]`.
+**Errores:** todos usan `ErrorResponse`: `timestamp`, `status`, `error`, `code`, `message`, `path`, `traceId`, `details[{field,reason}]`. El `traceId` es el mismo de la cabecera `X-Trace-Id` y de los logs de esa petición.
 
 | HTTP | `code` típicos |
 |---|---|
@@ -161,11 +165,29 @@ desconocidas y JSON malformado se rechazan; un número enviado como texto (`"12"
 | 403 | `ACCESO_DENEGADO` |
 | 404 | `EQUIPO_NO_ENCONTRADO`, `TIPO_EQUIPO_NO_ENCONTRADO`, `RUTA_NO_ENCONTRADA` |
 | 409 | `CODIGO_DUPLICADO`, `CONFLICTO_DE_DATOS` |
+| 413 | `CUERPO_DEMASIADO_GRANDE` (más de 16 KB) |
 | 422 | `HOROMETRO_INVALIDO` |
+| 429 | `DEMASIADOS_INTENTOS` (login; cabecera `Retry-After`) |
 | 500 | `ERROR_INTERNO` (sin trazas ni datos internos) |
 
-**Seguridad:** JWT stateless (HS256). Todo requiere `Authorization: Bearer <token>` salvo `/auth/login`, `/health` y Swagger.
-Los 401/403 salen con el mismo `ErrorResponse`. CORS con métodos y headers explícitos (incluye `Authorization`).
+**Seguridad:** JWT stateless (HS256). Todo requiere `Authorization: Bearer <token>` salvo `/auth/login`, `/health` y Swagger
+(Swagger solo está abierto fuera de producción). Los 401/403 salen con el mismo `ErrorResponse`.
+
+Revisión completa contra OWASP Top 10:2025 (estado inicial, corrección y estado final de cada punto):
+[`docs/revision-seguridad-backend.md`](docs/revision-seguridad-backend.md). Resumen de lo aplicado:
+
+| Medida | Detalle |
+|---|---|
+| Límite de intentos de login | 10 fallos por IP en 300 s → `429` + `Retry-After` (contador en memoria, por instancia) |
+| Secretos débiles | La app no arranca con `JWT_SECRET`/`ADMIN_PASSWORD` de ejemplo, cortos o poco variados |
+| JWT | HS256 fijo, `iss` y `aud` exigidos, 30 min por defecto; cualquier fallo al validar → `401` |
+| Login sin enumeración | Mismo trabajo de BCrypt exista o no el usuario; mensaje único |
+| Cabeceras | HSTS, CSP restrictiva, `Referrer-Policy`, `Permissions-Policy`, `nosniff`, `X-Frame-Options: DENY` |
+| CORS | Lista explícita; se rechaza `*` o un origen que no sea URL http(s) |
+| Tamaño del cuerpo | Más de 16 KB → `413` |
+| Trazabilidad | `traceId` por petición (logs, `X-Trace-Id`, errores); `401`/`403` y bloqueos se registran; lo que escribe el usuario se sanitiza antes de loguearlo |
+| Swagger | Apagado por defecto en el perfil `prod` (`SWAGGER_ENABLED=true` para encenderlo) |
+| Cadena de suministro | Dependabot, acciones de GitHub y imágenes Docker fijadas por SHA/digest, CodeQL, gitleaks y Trivy en CI |
 
 ## Cómo levantarlo en local
 
@@ -174,7 +196,7 @@ Requisitos: **Java 21**, **Maven 3.9+** y MySQL 8 (o Docker).
 ### Con Docker (recomendado)
 
 ```bash
-cp .env.example .env        # y cambia los valores (JWT_SECRET de 32+ caracteres, claves, etc.)
+cp .env.example .env        # los secretos vienen vacíos: rellénalos (openssl rand -hex 32 para JWT_SECRET, -hex 16 para DB_PASSWORD, -base64 18 para ADMIN_PASSWORD)
 docker compose up --build   # o: make up
 curl http://localhost:8080/health      # {"status":"UP","version":"local"}
 docker compose down                    # conserva los datos (volumen); "down -v" los borra
@@ -205,7 +227,7 @@ curl -s localhost:8080/equipos -H "Authorization: Bearer $TOKEN"
 ```
 
 Perfiles: `application.yml` (base), `application-local.yml` (logs de depuración) y `application-prod.yml`
-(logs sobrios; Swagger apagable con `SWAGGER_ENABLED=false`).
+(logs sobrios; Swagger **apagado** salvo `SWAGGER_ENABLED=true`).
 
 ## Variables de entorno
 
@@ -215,10 +237,13 @@ Ver [`.env.example`](.env.example). **No hay claves en el repo**; `.env` está e
 |---|---|
 | `DB_URL` | URL JDBC de MySQL (con Docker compose no hace falta: usa el servicio `db`) |
 | `DB_USER`, `DB_PASSWORD` | Credenciales de la base de datos |
-| `JWT_SECRET` | Secreto de firma. **Mínimo 32 caracteres**: si falta o es corto, la app no arranca |
-| `JWT_EXPIRATION_MINUTES` | Duración del token (por defecto 60) |
-| `ADMIN_USER`, `ADMIN_PASSWORD` | Usuario administrador inicial. Se crea al arrancar si no existe (si faltan, se avisa en el log y no se crea) |
-| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos, separados por coma |
+| `JWT_SECRET` | Secreto de firma. **Mínimo 32 caracteres** y no de ejemplo/débil: si no, la app no arranca |
+| `JWT_EXPIRATION_MINUTES` | Duración del token (por defecto 30) |
+| `ADMIN_USER`, `ADMIN_PASSWORD` | Usuario administrador inicial. Se crea al arrancar si no existe (si faltan, se avisa en el log y no se crea). La clave debe tener 12+ caracteres y no ser de ejemplo |
+| `CORS_ALLOWED_ORIGINS` | Orígenes permitidos, separados por coma (URL completa; `*` se rechaza) |
+| `LOGIN_MAX_INTENTOS`, `LOGIN_VENTANA_SEGUNDOS` | Intentos fallidos de login por IP (10) y ventana en segundos (300) antes del `429` |
+| `CUERPO_MAX_BYTES` | Tamaño máximo del cuerpo (16384); más → `413` |
+| `SWAGGER_ENABLED` | Solo perfil `prod`: `true` expone Swagger UI (apagado por defecto) |
 | `PORT` | Puerto HTTP (por defecto 8080) |
 | `APP_VERSION` | Tag de la imagen; lo fija el `Dockerfile` y lo expone `/health` (`dev` si no se define) |
 
@@ -229,8 +254,8 @@ mvn test          # pruebas
 mvn verify        # pruebas + cobertura: FALLA si instrucciones o ramas < 90%   (o: make verify)
 ```
 
-Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,8 % de instrucciones y 92,0 % de ramas**
-(211 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI) y la clase `EquiposApplication`; las entidades sí
+Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,7 % de instrucciones y 92,5 % de ramas**
+(340 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI) y la clase `EquiposApplication`; las entidades sí
 cuentan. Las ramas sin cubrir son verificaciones de `null` inalcanzables que genera MapStruct.
 Las pruebas replican la misma estructura de paquetes que el código (`src/test/java/...`).
 
@@ -294,7 +319,10 @@ Configuración única:
 
 ### CI/CD (GitHub Actions)
 
-- [`ci.yml`](.github/workflows/ci.yml) — en cada push/PR: `mvn verify` (falla si JaCoCo < 90 %) y las pruebas de `deploy.sh`.
+- [`ci.yml`](.github/workflows/ci.yml) — en cada push/PR: `mvn verify` (falla si JaCoCo < 90 %), las pruebas de `deploy.sh` y los
+  escaneos de seguridad: **gitleaks** (secretos en todo el historial), **Trivy** sobre la imagen (falla con HIGH/CRITICAL corregibles;
+  los aceptados, con motivo, en [`.trivyignore`](.trivyignore)) y **CodeQL** (en repos privados requiere GitHub Advanced Security;
+  se desactiva con la variable `CODEQL_HABILITADO=false`). Las acciones van fijadas por SHA y Dependabot las mantiene.
 - [`deploy.yml`](.github/workflows/deploy.yml) — en push a `main`, jobs encadenados con `needs`:
   `test` → `e2e` (levanta backend + MySQL con compose y valida login, CRUD, regla de mantenimiento, 401/400/404/409/422 y `/health`)
   → `deploy` (solo si `e2e` pasó; ejecuta `./deploy.sh`). Si el script hace rollback, **el job queda en rojo**.
@@ -364,7 +392,11 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
   admin inicial; no hay endpoints de gestión de usuarios (un `OPERADOR` se agrega por SQL).
 - **`/health` incluye `version`** además de `status`: el despliegue lo usa para validar que corre la versión nueva y para saber a qué
   versión volver. Si la BD cae responde `503 {"status":"DOWN"}`.
-- **`GET /equipos` sin paginación** (el enunciado no la pide). Los errores siempre traen `details` (vacío si no aplica).
+- **Listados paginados** (a pedido del dueño, tras la revisión OWASP A06): `Page`/`Pageable` de Spring Data y una clase de respuesta
+  propia; cambió la forma de la respuesta de los tres `GET` de lista. Los errores siempre traen `details` (vacío si no aplica).
+- **Revisión OWASP:** los CVE de Spring Framework 6.2.19 sin ruta de explotación en esta API se aceptan con motivo en `.trivyignore`;
+  Tomcat y Jackson sí se actualizaron. El límite de intentos de login es en memoria (por instancia): con varias réplicas habría que
+  moverlo a un almacén compartido. CodeQL y gitleaks solo se ejecutan en GitHub.
 - **Mensajes de validación en español** de forma determinista (`spring.web.locale=es`), sin depender del idioma del servidor.
 - **Código duplicado:** se valida antes de guardar y, ante dos altas simultáneas, la restricción única de la BD se traduce a
   `CODIGO_DUPLICADO` (409) en el adaptador de persistencia.
