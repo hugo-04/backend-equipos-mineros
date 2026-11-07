@@ -29,6 +29,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # Para el ROLLBACK: una imagen anterior debe poder arrancar aunque la BD ya tenga migraciones
+    # más nuevas (que esa imagen no conoce). Verificado: la versión vieja arranca contra un esquema con V6.
+    ignore-migration-patterns: "*:future"
   jackson:
     deserialization:
       # Rechaza propiedades desconocidas en el body
