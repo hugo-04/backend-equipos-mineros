@@ -2,98 +2,132 @@ package com.mineria.equipos.arquitectura;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static com.tngtech.archunit.library.Architectures.layeredArchitecture;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
+import java.util.List;
+
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
+import jakarta.persistence.Entity;
+
 /**
- * Pruebas de arquitectura: hacen fallar el build si alguien rompe la regla de dependencia
- * (infrastructure -> application -> domain). Solo se analiza el código de producción.
+ * Pruebas de arquitectura del monolito modular. Hacen fallar el build si alguien rompe las reglas:
+ * un módulo solo usa a otro a través de la interfaz de su {@code service}; no hay ciclos entre módulos;
+ * el controller no toca repositorios ni entidades; y las excepciones viven solo en {@code shared/exception}.
+ * Solo se analiza el código de producción. La visibilidad de Java no alcanza (las clases son públicas
+ * porque viven en subpaquetes distintos), por eso el control de acceso se hace aquí.
  */
 @AnalyzeClasses(packages = "com.mineria.equipos", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArquitecturaTest {
 
+    private static final String BASE = "com.mineria.equipos.";
+    private static final List<String> MODULOS = List.of("equipo", "tipo", "mantenimiento", "auth");
+
+    // ---------- Reglas entre módulos ----------
+
+    /**
+     * Un módulo solo puede usar de otro la interfaz de su service. Nunca su controller, la implementación
+     * del service, el repositorio, la entidad, la proyección, el mapper, la política ni su seguridad.
+     */
     @ArchTest
-    static final ArchRule domainNoConoceFrameworks = noClasses()
-            .that().resideInAPackage("..domain..")
+    static void unModuloSoloUsaLaInterfazDeServiceDeOtro(JavaClasses clases) {
+        for (String usuario : MODULOS) {
+            for (String dueno : MODULOS) {
+                if (usuario.equals(dueno)) {
+                    continue;
+                }
+                noClasses()
+                        .that().resideInAPackage(BASE + usuario + "..")
+                        .should().dependOnClassesThat().resideInAnyPackage(
+                                BASE + dueno + ".controller..", BASE + dueno + ".service.impl..",
+                                BASE + dueno + ".repository..", BASE + dueno + ".entity..",
+                                BASE + dueno + ".mapper..", BASE + dueno + ".policy..", BASE + dueno + ".security..")
+                        .because("'" + usuario + "' solo puede usar '" + dueno + "' a través de la interfaz de su service")
+                        .check(clases);
+            }
+        }
+    }
+
+    @ArchTest
+    static final ArchRule sinCiclosEntreModulos = slices()
+            .matching(BASE + "(*)..")
+            .should().beFreeOfCycles()
+            .because("las dependencias entre módulos deben ir en un solo sentido");
+
+    @ArchTest
+    static final ArchRule equipoNoDependeDeMantenimiento = noClasses()
+            .that().resideInAPackage(BASE + "equipo..")
+            .should().dependOnClassesThat().resideInAPackage(BASE + "mantenimiento..")
+            .because("mantenimiento depende de equipo, nunca al revés");
+
+    @ArchTest
+    static final ArchRule sharedNoDependeDeLosModulos = noClasses()
+            .that().resideInAPackage(BASE + "shared..")
             .should().dependOnClassesThat().resideInAnyPackage(
-                    "org.springframework..", "jakarta.persistence..", "jakarta.servlet..", "jakarta.validation..",
-                    "org.hibernate..", "com.fasterxml.jackson..", "io.swagger..", "org.openapitools..")
-            .because("el dominio debe ser Java puro: sin Spring, JPA ni web");
+                    BASE + "equipo..", BASE + "tipo..", BASE + "mantenimiento..", BASE + "auth..")
+            .because("shared es común a todos y no conoce a ningún módulo");
+
+    // ---------- Reglas de capas dentro de un módulo ----------
 
     @ArchTest
-    static final ArchRule domainNoDependeDeOtrasCapas = noClasses()
-            .that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat().resideInAnyPackage("..application..", "..infrastructure..")
-            .because("las dependencias apuntan hacia adentro");
-
-    @ArchTest
-    static final ArchRule applicationNoConoceInfrastructure = noClasses()
-            .that().resideInAPackage("..application..")
-            .should().dependOnClassesThat().resideInAPackage("..infrastructure..")
-            .because("la aplicación solo conoce el dominio y sus propios puertos");
-
-    @ArchTest
-    static final ArchRule applicationNoConoceJpaNiHttp = noClasses()
-            .that().resideInAPackage("..application..")
+    static final ArchRule controllersNoAccedenAPersistenciaNiLogica = noClasses()
+            .that().haveSimpleNameEndingWith("Controller")
             .should().dependOnClassesThat().resideInAnyPackage(
-                    "jakarta.persistence..", "org.hibernate..", "org.springframework.data..",
-                    "org.springframework.web..", "org.springframework.http..", "jakarta.servlet..")
-            .because("los casos de uso no saben de persistencia ni de HTTP");
+                    "..repository..", "..entity..", "..mapper..", "..service.impl..", "org.springframework.data..")
+            .because("el controller depende solo de interfaces de service: nunca de repositorios, entidades ni mappers");
 
     @ArchTest
-    static final ArchRule controllersNoAccedenARepositorios = noClasses()
+    static final ArchRule controllersEstanEnSuCarpeta = classes()
             .that().haveSimpleNameEndingWith("Controller")
-            .should().dependOnClassesThat().resideInAnyPackage("..adapter.out..", "org.springframework.data..")
-            .orShould().dependOnClassesThat().haveSimpleNameEndingWith("Repository")
-            .because("los controllers solo hablan con los puertos de entrada (casos de uso)");
+            .should().resideInAnyPackage("..controller..", "..shared.health..")
+            .because("los controllers viven en la carpeta controller de su módulo");
 
     @ArchTest
-    static final ArchRule controllersSoloDependenDeCasosDeUso = noClasses()
-            .that().haveSimpleNameEndingWith("Controller")
-            .should().dependOnClassesThat().resideInAPackage("..application.usecase..")
-            .because("el controller depende de las interfaces de port.in, nunca de sus implementaciones");
+    static final ArchRule repositoriosSonInterfaces = classes()
+            .that().haveSimpleNameEndingWith("Repository")
+            .should().beInterfaces().andShould().resideInAPackage("..repository..")
+            .because("los repositorios son interfaces de Spring Data en la carpeta repository");
 
     @ArchTest
-    static final ArchRule entidadesJpaSoloEnPersistencia = noClasses()
-            .that().resideOutsideOfPackage("..adapter.out.persistence..")
-            .should().dependOnClassesThat().resideInAPackage("..adapter.out.persistence.entity..")
-            .because("las entidades JPA no salen del adaptador de persistencia");
-
-    @ArchTest
-    static final ArchRule adaptadoresDeEntradaNoConocenLosDeSalida = noClasses()
-            .that().resideInAPackage("..adapter.in..")
-            .should().dependOnClassesThat().resideInAPackage("..adapter.out..")
-            .because("los adaptadores no se hablan entre sí: se comunican por los puertos");
-
-    @ArchTest
-    static final ArchRule loDeSalidaImplementaPuertos = classes()
-            .that().resideInAPackage("..adapter.out.persistence").and().haveSimpleNameEndingWith("Adapter")
-            .should().dependOnClassesThat().resideInAPackage("..application.port.out..")
-            .because("cada adaptador de persistencia implementa un puerto de salida");
-
-    @ArchTest
-    static final ArchRule puertosSonInterfaces = classes()
-            .that().resideInAnyPackage("..application.port..").and().areTopLevelClasses()
+    static final ArchRule proyeccionesSonInterfaces = classes()
+            .that().resideInAPackage("..repository.projection..")
             .should().beInterfaces()
-            .because("los puertos son contratos, no implementaciones (los Comando anidados son records de datos)");
+            .because("las proyecciones son interfaces de solo lectura");
 
     @ArchTest
-    static final ArchRule casosDeUsoImplementanUnPuertoDeEntrada = classes()
-            .that().resideInAPackage("..application.usecase..").and().haveSimpleNameEndingWith("Service")
-            .should().dependOnClassesThat().resideInAPackage("..application.port.in..")
-            .because("cada caso de uso implementa su interfaz de port.in");
+    static final ArchRule entidadesVivenEnEntity = classes()
+            .that().areAnnotatedWith(Entity.class)
+            .should().resideInAPackage("..entity..")
+            .because("las entidades JPA viven en la carpeta entity de su módulo");
 
     @ArchTest
-    static final ArchRule capasEnOrden = layeredArchitecture()
-            .consideringOnlyDependenciesInLayers()
-            .layer("Dominio").definedBy("..domain..")
-            .layer("Aplicacion").definedBy("..application..")
-            .layer("Infraestructura").definedBy("..infrastructure..")
-            .whereLayer("Infraestructura").mayNotBeAccessedByAnyLayer()
-            .whereLayer("Aplicacion").mayOnlyBeAccessedByLayers("Infraestructura")
-            .whereLayer("Dominio").mayOnlyBeAccessedByLayers("Aplicacion", "Infraestructura");
+    static final ArchRule serviciosTienenInterfazEImplementacion = classes()
+            .that().resideInAPackage("..service.impl..")
+            .should().haveSimpleNameEndingWith("ServiceImpl")
+            .andShould().bePublic()
+            .because("cada implementación vive en service/impl y se llama XxxServiceImpl");
+
+    @ArchTest
+    static final ArchRule interfacesDeServiceSonInterfaces = classes()
+            .that().resideInAPackage("..service")
+            .should().beInterfaces()
+            .because("lo que vive en service (sin impl) es la interfaz que usan controller y otros módulos");
+
+    @ArchTest
+    static final ArchRule laPersistenciaNoConoceALaLogica = noClasses()
+            .that().resideInAnyPackage("..repository..", "..entity..")
+            .should().dependOnClassesThat().resideInAnyPackage("..service..", "..controller..")
+            .because("las capas de abajo no conocen a las de arriba");
+
+    // ---------- Excepciones ----------
+
+    @ArchTest
+    static final ArchRule excepcionesSoloEnSharedException = classes()
+            .that().areAssignableTo(Throwable.class)
+            .should().resideInAPackage("..shared.exception..")
+            .because("todas las excepciones viven en shared/exception, no repartidas por módulo");
 }
