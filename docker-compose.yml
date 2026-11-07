@@ -1,0 +1,50 @@
+# Entorno de desarrollo local: backend + MySQL.
+# Uso: copia .env.example a .env, ajusta los valores y ejecuta "docker compose up --build".
+# Nombre propio del proyecto: así los volúmenes no chocan con los de otros proyectos de la misma carpeta/nombre
+name: equipos-mineros
+
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-equipos_mineros}
+      MYSQL_USER: ${DB_USER:?Define DB_USER en .env}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Define DB_PASSWORD en .env}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      # El backend no arranca hasta que MySQL acepte conexiones
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u\"$$MYSQL_USER\" -p\"$$MYSQL_PASSWORD\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  backend:
+    build:
+      context: .
+      args:
+        APP_VERSION: ${APP_VERSION:-local}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
+      PORT: ${PORT:-8080}
+      # Dentro de la red de compose el host de la BD es el nombre del servicio
+      DB_URL: jdbc:mysql://db:3306/${DB_NAME:-equipos_mineros}?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET:?Define JWT_SECRET en .env (32+ caracteres)}
+      JWT_EXPIRATION_MINUTES: ${JWT_EXPIRATION_MINUTES:-60}
+      ADMIN_USER: ${ADMIN_USER:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000}
+
+volumes:
+  mysql_data:
