@@ -168,4 +168,97 @@ class JwtServiceTest {
                 .isInstanceOfSatisfying(TokenJwtException.class,
                         e -> assertThat(e.getCodigo()).isEqualTo(TokenJwtException.TOKEN_INVALIDO));
     }
+
+    @Test
+    @DisplayName("el token emitido lleva emisor, audiencia, usuario, rol y vence a los 30 minutos")
+    void claimsDelTokenEmitido() throws Exception {
+        // Arrange
+        JwtService servicio = servicioEn(INICIO);
+
+        // Act
+        String token = servicio.generarToken(usuario("admin", "ADMIN"));
+        String payload = new String(java.util.Base64.getUrlDecoder().decode(token.split("\\.")[1]),
+                java.nio.charset.StandardCharsets.UTF_8);
+        var claims = new com.fasterxml.jackson.databind.ObjectMapper().readTree(payload);
+
+        // Assert
+        assertThat(claims.get("iss").asText()).isEqualTo("equipos-mineros-backend");
+        assertThat(claims.get("aud").toString()).contains("equipos-mineros-api");
+        assertThat(claims.get("sub").asText()).isEqualTo("admin");
+        assertThat(claims.get("rol").asText()).isEqualTo("ADMIN");
+        assertThat(claims.get("exp").asLong() - claims.get("iat").asLong()).isEqualTo(30 * 60);
+    }
+
+    @Test
+    @DisplayName("autenticar: un token sin emisor ni audiencia se rechaza")
+    void sinEmisorNiAudiencia() {
+        // Arrange
+        JwtService servicio = new JwtService(propiedades(Tokens.SECRETO), Clock.systemUTC());
+        String token = Tokens.firmar("admin", "ADMIN", Instant.now().plusSeconds(600), Tokens.SECRETO, null, null);
+
+        // Act + Assert
+        assertThatThrownBy(() -> servicio.autenticar(token))
+                .isInstanceOfSatisfying(TokenJwtException.class,
+                        e -> assertThat(e.getCodigo()).isEqualTo(TokenJwtException.TOKEN_INVALIDO));
+    }
+
+    @Test
+    @DisplayName("autenticar: un token de otro emisor se rechaza")
+    void emisorIncorrecto() {
+        // Arrange
+        JwtService servicio = new JwtService(propiedades(Tokens.SECRETO), Clock.systemUTC());
+        String token = Tokens.firmar("admin", "ADMIN", Instant.now().plusSeconds(600), Tokens.SECRETO,
+                "otro-sistema", Tokens.AUDIENCIA);
+
+        // Act + Assert
+        assertThatThrownBy(() -> servicio.autenticar(token))
+                .isInstanceOfSatisfying(TokenJwtException.class,
+                        e -> assertThat(e.getCodigo()).isEqualTo(TokenJwtException.TOKEN_INVALIDO));
+    }
+
+    @Test
+    @DisplayName("autenticar: un token para otra audiencia se rechaza")
+    void audienciaIncorrecta() {
+        // Arrange
+        JwtService servicio = new JwtService(propiedades(Tokens.SECRETO), Clock.systemUTC());
+        String token = Tokens.firmar("admin", "ADMIN", Instant.now().plusSeconds(600), Tokens.SECRETO,
+                Tokens.EMISOR, "otra-api");
+
+        // Act + Assert
+        assertThatThrownBy(() -> servicio.autenticar(token))
+                .isInstanceOfSatisfying(TokenJwtException.class,
+                        e -> assertThat(e.getCodigo()).isEqualTo(TokenJwtException.TOKEN_INVALIDO));
+    }
+
+    @Test
+    @DisplayName("autenticar: un token con alg none (sin firma) se rechaza")
+    void algNone() {
+        // Arrange: cabecera {"alg":"none"} y claims válidos, sin firma
+        JwtService servicio = new JwtService(propiedades(Tokens.SECRETO), Clock.systemUTC());
+        var b64 = java.util.Base64.getUrlEncoder().withoutPadding();
+        String cabecera = b64.encodeToString("{\"alg\":\"none\",\"typ\":\"JWT\"}".getBytes());
+        String claims = b64.encodeToString(("{\"iss\":\"" + Tokens.EMISOR + "\",\"aud\":\"" + Tokens.AUDIENCIA
+                + "\",\"sub\":\"admin\",\"rol\":\"ADMIN\",\"exp\":" + (Instant.now().getEpochSecond() + 600) + "}").getBytes());
+
+        // Act + Assert
+        assertThatThrownBy(() -> servicio.autenticar(cabecera + "." + claims + "."))
+                .isInstanceOfSatisfying(TokenJwtException.class,
+                        e -> assertThat(e.getCodigo()).isEqualTo(TokenJwtException.TOKEN_INVALIDO));
+    }
+
+    @Test
+    @DisplayName("autenticar: un rol con el tipo equivocado (número) se rechaza sin romperse")
+    void rolConTipoEquivocado() {
+        // Arrange
+        JwtService servicio = new JwtService(propiedades(Tokens.SECRETO), Clock.systemUTC());
+        var clave = io.jsonwebtoken.security.Keys.hmacShaKeyFor(Tokens.SECRETO.getBytes());
+        String token = io.jsonwebtoken.Jwts.builder().issuer(Tokens.EMISOR).audience().add(Tokens.AUDIENCIA).and()
+                .subject("admin").claim("rol", 5).expiration(java.util.Date.from(Instant.now().plusSeconds(600)))
+                .signWith(clave).compact();
+
+        // Act + Assert
+        assertThatThrownBy(() -> servicio.autenticar(token))
+                .isInstanceOfSatisfying(TokenJwtException.class,
+                        e -> assertThat(e.getCodigo()).isEqualTo(TokenJwtException.TOKEN_INVALIDO));
+    }
 }

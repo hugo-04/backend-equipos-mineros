@@ -71,6 +71,33 @@ class SeguridadHttpTest {
     }
 
     @Test
+    @DisplayName("token con alg none (sin firma): 401 TOKEN_INVALIDO")
+    void algNone() throws Exception {
+        // Arrange
+        var b64 = java.util.Base64.getUrlEncoder().withoutPadding();
+        String cabecera = b64.encodeToString("{\"alg\":\"none\"}".getBytes());
+        String claims = b64.encodeToString(("{\"iss\":\"" + Tokens.EMISOR + "\",\"aud\":\"" + Tokens.AUDIENCIA
+                + "\",\"sub\":\"admin\",\"rol\":\"ADMIN\",\"exp\":4102444800}").getBytes());
+
+        // Act + Assert
+        mockMvc.perform(get("/tipos").header(HttpHeaders.AUTHORIZATION, "Bearer " + cabecera + "." + claims + "."))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("TOKEN_INVALIDO"));
+    }
+
+    @Test
+    @DisplayName("token firmado bien pero sin emisor ni audiencia: 401 TOKEN_INVALIDO")
+    void sinEmisorNiAudiencia() throws Exception {
+        // Arrange
+        String token = Tokens.firmar("admin", "ADMIN", java.time.Instant.now().plusSeconds(600), Tokens.SECRETO, null, null);
+
+        // Act + Assert
+        mockMvc.perform(get("/tipos").header(HttpHeaders.AUTHORIZATION, Tokens.bearer(token)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("TOKEN_INVALIDO"));
+    }
+
+    @Test
     @DisplayName("Bearer sin token: 401 TOKEN_INVALIDO")
     void bearerVacio() throws Exception {
         // Act + Assert

@@ -8,12 +8,15 @@ import javax.crypto.SecretKey;
 
 import com.mineria.equipos.auth.entity.Rol;
 
+import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 /** Fabrica tokens JWT para las pruebas con el mismo secreto de application-test.yml. */
 public final class Tokens {
 
+    public static final String EMISOR = "equipos-mineros-backend";
+    public static final String AUDIENCIA = "equipos-mineros-api";
     public static final String SECRETO = "secreto-solo-para-pruebas-de-al-menos-32-caracteres";
 
     private Tokens() {
@@ -36,8 +39,21 @@ public final class Tokens {
     }
 
     public static String firmar(String username, String rol, Instant expira, String secreto) {
+        return firmar(username, rol, expira, secreto, EMISOR, AUDIENCIA);
+    }
+
+    /** Token firmado correctamente pero con otro emisor o audiencia (o sin ellos, si se pasa null). */
+    public static String firmar(String username, String rol, Instant expira, String secreto, String emisor,
+                                String audiencia) {
         SecretKey clave = Keys.hmacShaKeyFor(secreto.getBytes(StandardCharsets.UTF_8));
-        return Jwts.builder()
+        JwtBuilder builder = Jwts.builder();
+        if (emisor != null) {
+            builder.issuer(emisor);
+        }
+        if (audiencia != null) {
+            builder.audience().add(audiencia);
+        }
+        return builder
                 .subject(username)
                 .claim("rol", rol)
                 .issuedAt(Date.from(expira.minusSeconds(3600)))

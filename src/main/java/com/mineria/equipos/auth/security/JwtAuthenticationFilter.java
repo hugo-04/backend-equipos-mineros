@@ -43,6 +43,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             } catch (TokenJwtException e) {
                 log.debug("Token rechazado en {}: {}", request.getRequestURI(), e.getCodigo());
                 request.setAttribute(ATRIBUTO_ERROR_TOKEN, e.getCodigo());
+            } catch (RuntimeException e) {
+                // Falla cerrado: si algo inesperado impide validar el token, la petición queda SIN autenticar (401)
+                log.error("Error inesperado al validar el token en {}", request.getRequestURI(), e);
+                request.setAttribute(ATRIBUTO_ERROR_TOKEN, TokenJwtException.TOKEN_INVALIDO);
             }
         }
         chain.doFilter(request, response);

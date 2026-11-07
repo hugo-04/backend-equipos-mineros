@@ -22,7 +22,6 @@ import com.mineria.equipos.shared.config.AppProperties;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -36,6 +35,9 @@ public class JwtService {
 
     private static final String CLAIM_ROL = "rol";
     private static final String PREFIJO_ROL = "ROLE_";
+    /** Quién emite el token y para quién es: un token de otro sistema (o sin estos datos) se rechaza. */
+    static final String EMISOR = "equipos-mineros-backend";
+    static final String AUDIENCIA = "equipos-mineros-api";
 
     private final SecretKey clave;
     private final Duration duracion;
@@ -51,6 +53,8 @@ public class JwtService {
     public String generarToken(UserDetails usuario) {
         Instant ahora = clock.instant();
         return Jwts.builder()
+                .issuer(EMISOR)
+                .audience().add(AUDIENCIA).and()
                 .subject(usuario.getUsername())
                 .claim(CLAIM_ROL, rolDe(usuario))
                 .issuedAt(Date.from(ahora))
@@ -64,7 +68,7 @@ public class JwtService {
     }
 
     /**
-     * Valida firma y expiración del token y arma la autenticación (usuario + rol).
+     * Valida firma, expiración, emisor y audiencia del token y arma la autenticación (usuario + rol).
      *
      * @throws TokenJwtException si el token está vencido, mal formado o la firma no coincide
      */
@@ -72,6 +76,8 @@ public class JwtService {
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(clave)
+                    .requireIssuer(EMISOR)
+                    .requireAudience(AUDIENCIA)
                     .clock(() -> Date.from(clock.instant()))
                     .build()
                     .parseSignedClaims(token)
@@ -81,8 +87,9 @@ public class JwtService {
                     claims.getSubject(), null, List.of(new SimpleGrantedAuthority(PREFIJO_ROL + rol.name())));
         } catch (ExpiredJwtException e) {
             throw new TokenJwtException(TokenJwtException.TOKEN_EXPIRADO, "El token expiró", e);
-        } catch (JwtException | IllegalArgumentException e) {
-            // Mal formado, firma incorrecta, vacío o con un rol que no existe
+        } catch (RuntimeException e) {
+            // Falla cerrado: mal formado, sin firma (alg none), firma o emisor/audiencia incorrectos, vacío, rol inexistente
+            // o cualquier otro fallo inesperado al leerlo => el token simplemente no sirve
             throw new TokenJwtException(TokenJwtException.TOKEN_INVALIDO, "El token no es válido", e);
         }
     }
