@@ -1,10 +1,12 @@
 package com.mineria.equipos.equipo.service;
 
 import java.math.BigDecimal;
-import java.util.List;
+
+import org.springframework.data.domain.Pageable;
 
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 
 /**
  * Servicio de equipos. Es la única puerta de entrada al módulo: el controller y otros módulos
@@ -12,7 +14,7 @@ import com.mineria.equipos.generated.model.EquipoResponse;
  */
 public interface EquipoService {
 
-    List<EquipoResponse> listar();
+    PaginaEquipoResponse listar(Pageable pageable);
 
     EquipoResponse obtener(Long id);
 

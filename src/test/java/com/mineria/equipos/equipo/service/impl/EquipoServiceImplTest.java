@@ -1,6 +1,10 @@
 package com.mineria.equipos.equipo.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.mineria.equipos.generated.model.PaginaEquipoResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -431,15 +435,37 @@ class EquipoServiceImplTest {
     @DisplayName("listar: calcula el estado de cada equipo por separado")
     void listar() {
         // Arrange
-        when(repository.listarProyecciones()).thenReturn(List.of(
+        Pageable pagina = PageRequest.of(0, 20);
+        when(repository.listarProyecciones(pagina)).thenReturn(new PageImpl<>(List.of(
                 Datos.equipoProjection(1L, "CAM-001", "300.0", "0", 250),
-                Datos.equipoProjection(2L, "CAM-002", "300.0", "100.0", 250)));
+                Datos.equipoProjection(2L, "CAM-002", "300.0", "100.0", 250)), pagina, 2));
 
         // Act
-        List<EquipoResponse> respuestas = service.listar();
+        PaginaEquipoResponse respuesta = service.listar(pagina);
 
         // Assert: el primero lleva 300 h desde el último mant., el segundo solo 200
-        assertThat(respuestas).extracting(EquipoResponse::getRequiereMantenimiento).containsExactly(true, false);
+        assertThat(respuesta.getContent()).extracting(EquipoResponse::getRequiereMantenimiento).containsExactly(true, false);
+        assertThat(respuesta.getTotalElements()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("listar: copia los datos de paginación de Spring Data (la página 1 de 3 elementos con tamaño 2)")
+    void listarMapeaLaPaginacion() {
+        // Arrange: Spring Data numera desde 0; la 2.ª página (índice 1) tiene 1 elemento y es la última
+        Pageable pagina = PageRequest.of(1, 2);
+        when(repository.listarProyecciones(pagina)).thenReturn(new PageImpl<>(
+                List.of(Datos.equipoProjection(3L, "CAM-003", "10.0", "0", 250)), pagina, 3));
+
+        // Act
+        PaginaEquipoResponse respuesta = service.listar(pagina);
+
+        // Assert
+        assertThat(respuesta.getPage()).isEqualTo(1);
+        assertThat(respuesta.getSize()).isEqualTo(2);
+        assertThat(respuesta.getTotalElements()).isEqualTo(3L);
+        assertThat(respuesta.getTotalPages()).isEqualTo(2);
+        assertThat(respuesta.getFirst()).isFalse();
+        assertThat(respuesta.getLast()).isTrue();
     }
 
     // ---------- servicios para otros módulos ----------

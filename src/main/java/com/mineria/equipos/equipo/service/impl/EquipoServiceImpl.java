@@ -2,11 +2,11 @@ package com.mineria.equipos.equipo.service.impl;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +16,7 @@ import com.mineria.equipos.equipo.repository.EquipoRepository;
 import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.DomainException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
@@ -46,8 +47,8 @@ public class EquipoServiceImpl implements EquipoService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<EquipoResponse> listar() {
-        return mapper.toResponses(repository.listarProyecciones());
+    public PaginaEquipoResponse listar(Pageable pageable) {
+        return mapper.toPagina(repository.listarProyecciones(pageable));
     }
 
     @Override

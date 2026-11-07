@@ -1,6 +1,7 @@
 package com.mineria.equipos.integracion;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.data.domain.PageRequest;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
@@ -51,7 +52,7 @@ class RegistroMantenimientoAtomicoIntegrationTest {
         assertThat(registrado.getHorometroAlRegistrar()).isEqualByComparingTo("300.0");
         assertThat(equipo.getHorometroUltimoMant()).isEqualByComparingTo("300.0");
         assertThat(equipo.getRequiereMantenimiento()).isFalse();
-        assertThat(mantenimientoService.listarPorEquipo(id)).hasSize(1);
+        assertThat(mantenimientoService.listarPorEquipo(id, PageRequest.of(0, 20)).getContent()).hasSize(1);
     }
 
     @Test
@@ -67,6 +68,6 @@ class RegistroMantenimientoAtomicoIntegrationTest {
         EquipoResponse equipo = equipoService.obtener(id);
         assertThat(equipo.getHorometroUltimoMant()).isEqualByComparingTo("0");
         assertThat(equipo.getRequiereMantenimiento()).isTrue();
-        assertThat(mantenimientoService.listarPorEquipo(id)).isEmpty();
+        assertThat(mantenimientoService.listarPorEquipo(id, PageRequest.of(0, 20)).getContent()).isEmpty();
     }
 }

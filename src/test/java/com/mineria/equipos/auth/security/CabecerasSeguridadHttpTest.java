@@ -1,6 +1,8 @@
 package com.mineria.equipos.auth.security;
 
 import static org.hamcrest.Matchers.containsString;
+import com.mineria.equipos.generated.model.PaginaTipoEquipoResponse;
+import static org.mockito.ArgumentMatchers.any;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -54,7 +56,7 @@ class CabecerasSeguridadHttpTest {
     @DisplayName("una respuesta autenticada correcta lleva todas las cabeceras")
     void respuestaCorrecta() throws Exception {
         // Arrange
-        when(tipoService.listar()).thenReturn(List.of());
+        when(tipoService.listar(any())).thenReturn(new PaginaTipoEquipoResponse());
         String token = Tokens.bearer(Tokens.valido("admin", Rol.ADMIN));
 
         // Act + Assert

@@ -1,8 +1,9 @@
 package com.mineria.equipos.equipo.repository;
 
-import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -24,8 +25,10 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
             from Equipo e join TipoEquipo t on t.id = e.tipoId
             """;
 
-    @Query(SELECT_PROYECCION + " order by e.id")
-    List<EquipoProjection> listarProyecciones();
+    /** Una página de equipos con su tipo. El COUNT se escribe a mano porque Spring no lo deriva bien de un JOIN con proyección. */
+    @Query(value = SELECT_PROYECCION + " order by e.id",
+            countQuery = "select count(e) from Equipo e join TipoEquipo t on t.id = e.tipoId")
+    Page<EquipoProjection> listarProyecciones(Pageable pageable);
 
     @Query(SELECT_PROYECCION + " where e.id = :id")
     Optional<EquipoProjection> buscarProyeccionPorId(@Param("id") Long id);

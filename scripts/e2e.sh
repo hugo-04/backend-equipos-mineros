@@ -75,6 +75,18 @@ request GET /tipos
 verificar "GET /tipos -> 200" 200 "$STATUS"
 contiene "incluye Excavadora" "Excavadora"
 
+echo "[3b] Paginación"
+request GET "/tipos?size=2"
+verificar "GET /tipos?size=2 -> 200" 200 "$STATUS"
+verificar "3 tipos repartidos en 2 páginas" 2 "$(campo totalPages)"
+verificar "es la primera página" true "$(campo first)"
+request GET "/tipos?page=1&size=2"
+verificar "la segunda página trae el tipo restante y es la última" true "$(campo last)"
+request GET "/equipos?size=101"
+verificar "size mayor al máximo (100) -> 400" 400 "$STATUS"
+request GET "/equipos?page=-1"
+verificar "page negativa -> 400" 400 "$STATUS"
+
 echo "[4] Validaciones (400)"
 request POST /equipos '{"codigo":"a b","tipoId":0,"horometro":-1}'
 verificar "body inválido -> 400" 400 "$STATUS"

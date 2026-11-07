@@ -1,6 +1,8 @@
 package com.mineria.equipos.auth.security;
 
 import static org.mockito.Mockito.when;
+import com.mineria.equipos.generated.model.PaginaTipoEquipoResponse;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -44,7 +46,7 @@ class SeguridadHttpTest {
     @DisplayName("token válido: pasa")
     void tokenValido() throws Exception {
         // Arrange
-        when(tipoService.listar()).thenReturn(List.of());
+        when(tipoService.listar(any())).thenReturn(new PaginaTipoEquipoResponse());
 
         // Act + Assert
         mockMvc.perform(get("/tipos").header(HttpHeaders.AUTHORIZATION, Tokens.bearer(Tokens.valido("admin", Rol.ADMIN))))

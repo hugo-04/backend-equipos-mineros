@@ -1,7 +1,6 @@
 package com.mineria.equipos.equipo.controller;
 
 import java.net.URI;
-import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
@@ -11,6 +10,8 @@ import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.generated.api.EquiposApi;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.PaginaEquipoResponse;
+import com.mineria.equipos.shared.pagination.Paginacion;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,8 +23,8 @@ public class EquipoController implements EquiposApi {
     private final EquipoService equipoService;
 
     @Override
-    public ResponseEntity<List<EquipoResponse>> listarEquipos() {
-        return ResponseEntity.ok(equipoService.listar());
+    public ResponseEntity<PaginaEquipoResponse> listarEquipos(Integer page, Integer size) {
+        return ResponseEntity.ok(equipoService.listar(Paginacion.de(page, size)));
     }
 
     @Override

@@ -1,6 +1,8 @@
 package com.mineria.equipos.mantenimiento.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 
 import java.time.Instant;
 import java.util.List;
@@ -40,7 +42,8 @@ class MantenimientoRepositoryTest {
                 Instant.parse("2026-03-01T00:00:00Z")));
 
         // Act
-        List<MantenimientoProjection> historial = repository.findByEquipoIdOrderByFechaDescIdDesc(equipo.getId());
+        List<MantenimientoProjection> historial = repository
+                .findByEquipoIdOrderByFechaDescIdDesc(equipo.getId(), PageRequest.of(0, 20)).getContent();
 
         // Assert
         assertThat(historial).extracting(MantenimientoProjection::getNotas).containsExactly("Nuevo", "Viejo");
@@ -57,8 +60,28 @@ class MantenimientoRepositoryTest {
         repository.saveAndFlush(Datos.mantenimiento(b.getId(), "300.0", "De B", Datos.AHORA));
 
         // Act + Assert
-        assertThat(repository.findByEquipoIdOrderByFechaDescIdDesc(a.getId()))
+        assertThat(repository.findByEquipoIdOrderByFechaDescIdDesc(a.getId(), PageRequest.of(0, 20)).getContent())
                 .extracting(MantenimientoProjection::getNotas).containsExactly("De A");
+    }
+
+    @Test
+    @DisplayName("pagina el historial: 3 registros con tamaño 2 -> 2 páginas, el más reciente primero")
+    void paginaElHistorial() {
+        // Arrange
+        Equipo equipo = equipoGuardado("CAM-074", "900.0");
+        repository.saveAndFlush(Datos.mantenimiento(equipo.getId(), "300.0", "Tercero", Instant.parse("2026-01-01T00:00:00Z")));
+        repository.saveAndFlush(Datos.mantenimiento(equipo.getId(), "600.0", "Segundo", Instant.parse("2026-02-01T00:00:00Z")));
+        repository.saveAndFlush(Datos.mantenimiento(equipo.getId(), "900.0", "Primero", Instant.parse("2026-03-01T00:00:00Z")));
+
+        // Act
+        Page<MantenimientoProjection> primera = repository.findByEquipoIdOrderByFechaDescIdDesc(equipo.getId(), PageRequest.of(0, 2));
+        Page<MantenimientoProjection> segunda = repository.findByEquipoIdOrderByFechaDescIdDesc(equipo.getId(), PageRequest.of(1, 2));
+
+        // Assert
+        assertThat(primera.getTotalElements()).isEqualTo(3);
+        assertThat(primera.getContent()).extracting(MantenimientoProjection::getNotas).containsExactly("Primero", "Segundo");
+        assertThat(segunda.getContent()).extracting(MantenimientoProjection::getNotas).containsExactly("Tercero");
+        assertThat(segunda.isLast()).isTrue();
     }
 
     @Test

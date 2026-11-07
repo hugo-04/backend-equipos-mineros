@@ -1,11 +1,10 @@
 package com.mineria.equipos.tipo.service.impl;
 
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.mineria.equipos.generated.model.TipoEquipoResponse;
+import com.mineria.equipos.generated.model.PaginaTipoEquipoResponse;
 import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
 import com.mineria.equipos.tipo.mapper.TipoMapper;
 import com.mineria.equipos.tipo.repository.TipoRepository;
@@ -23,8 +22,8 @@ public class TipoServiceImpl implements TipoService {
     private final TipoMapper mapper;
 
     @Override
-    public List<TipoEquipoResponse> listar() {
-        return mapper.toResponses(repository.findAllProjectedByOrderByIdAsc());
+    public PaginaTipoEquipoResponse listar(Pageable pageable) {
+        return mapper.toPagina(repository.findAllProjectedByOrderByIdAsc(pageable));
     }
 
     @Override

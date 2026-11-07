@@ -1,6 +1,10 @@
 package com.mineria.equipos.mantenimiento.service.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import com.mineria.equipos.generated.model.PaginaMantenimientoResponse;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.PageImpl;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
@@ -127,18 +131,22 @@ class MantenimientoServiceImplTest {
     @DisplayName("listarPorEquipo: devuelve el historial de un equipo que existe")
     void historialDeEquipoExistente() {
         // Arrange
-        when(repository.findByEquipoIdOrderByFechaDescIdDesc(4L))
-                .thenReturn(List.of(Datos.mantenimientoProjection(1L, 4L, "300.0")));
+        Pageable pagina = PageRequest.of(0, 20);
+        when(repository.findByEquipoIdOrderByFechaDescIdDesc(4L, pagina))
+                .thenReturn(new PageImpl<>(List.of(Datos.mantenimientoProjection(1L, 4L, "300.0")), pagina, 1));
 
         // Act
-        List<MantenimientoResponse> resultado = service.listarPorEquipo(4L);
+        PaginaMantenimientoResponse resultado = service.listarPorEquipo(4L, pagina);
 
         // Assert
         verify(equipoService).verificarExiste(4L);
-        assertThat(resultado).singleElement().satisfies(m -> {
+        assertThat(resultado.getContent()).singleElement().satisfies(m -> {
             assertThat(m.getEquipoId()).isEqualTo(4L);
             assertThat(m.getNotas()).isEqualTo("Cambio de aceite");
         });
+        assertThat(resultado.getTotalElements()).isEqualTo(1L);
+        assertThat(resultado.getPage()).isZero();
+        assertThat(resultado.getLast()).isTrue();
     }
 
     @Test
@@ -148,7 +156,8 @@ class MantenimientoServiceImplTest {
         doThrow(new EquipoNotFoundException(4L)).when(equipoService).verificarExiste(4L);
 
         // Act + Assert
-        assertThatThrownBy(() -> service.listarPorEquipo(4L)).isInstanceOf(EquipoNotFoundException.class);
-        verify(repository, never()).findByEquipoIdOrderByFechaDescIdDesc(4L);
+        Pageable pagina = PageRequest.of(0, 20);
+        assertThatThrownBy(() -> service.listarPorEquipo(4L, pagina)).isInstanceOf(EquipoNotFoundException.class);
+        verify(repository, never()).findByEquipoIdOrderByFechaDescIdDesc(4L, pagina);
     }
 }

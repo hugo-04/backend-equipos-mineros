@@ -7,6 +7,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 
 import com.mineria.equipos.equipo.entity.Equipo;
 import com.mineria.equipos.equipo.policy.EstadoMantenimiento;
@@ -14,6 +15,8 @@ import com.mineria.equipos.equipo.policy.MantenimientoPolicy;
 import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.PaginaEquipoResponse;
+import com.mineria.equipos.shared.pagination.MapeoDePagina;
 
 /**
  * Convierte entre los DTOs del contrato, la entidad y la proyección de equipos. Es una clase abstracta
@@ -35,6 +38,9 @@ public abstract class EquipoMapper {
     public abstract EquipoResponse toResponse(EquipoProjection proyeccion);
 
     public abstract List<EquipoResponse> toResponses(List<EquipoProjection> proyecciones);
+
+    @MapeoDePagina
+    public abstract PaginaEquipoResponse toPagina(Page<EquipoProjection> pagina);
 
     // El alta fija id, ciclo de mantenimiento y fecha de creación: no vienen del request
     @Mapping(target = "id", ignore = true)

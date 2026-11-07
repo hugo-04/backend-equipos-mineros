@@ -1,6 +1,8 @@
 package com.mineria.equipos.equipo.controller;
 
 import static org.hamcrest.Matchers.endsWith;
+import com.mineria.equipos.generated.model.PaginaEquipoResponse;
+import org.springframework.data.domain.PageRequest;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -22,6 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -71,17 +74,72 @@ class EquipoControllerTest {
     @DisplayName("GET /equipos: 200 con la lista y el estado de mantenimiento")
     void listar() throws Exception {
         // Arrange
-        when(equipoService.listar()).thenReturn(List.of(vista(1L, true), vista(2L, false)));
+        when(equipoService.listar(any())).thenReturn(
+                new PaginaEquipoResponse(0, 20, 2L, 1, true, true, List.of(vista(1L, true), vista(2L, false))));
 
         // Act + Assert
         mockMvc.perform(get("/equipos").header(HttpHeaders.AUTHORIZATION, admin()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[0].codigo").value("CAM-001"))
-                .andExpect(jsonPath("$[0].tipo.nombre").value("Camión"))
-                .andExpect(jsonPath("$[0].requiereMantenimiento").value(true))
-                .andExpect(jsonPath("$[0].estado").value("Requiere mantenimiento"))
-                .andExpect(jsonPath("$[1].estado").value("OK"));
+                .andExpect(jsonPath("$.content.length()").value(2))
+                .andExpect(jsonPath("$.content[0].codigo").value("CAM-001"))
+                .andExpect(jsonPath("$.content[0].tipo.nombre").value("Camión"))
+                .andExpect(jsonPath("$.content[0].requiereMantenimiento").value(true))
+                .andExpect(jsonPath("$.content[0].estado").value("Requiere mantenimiento"))
+                .andExpect(jsonPath("$.content[1].estado").value("OK"))
+                .andExpect(jsonPath("$.page").value(0))
+                .andExpect(jsonPath("$.size").value(20))
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.totalPages").value(1))
+                .andExpect(jsonPath("$.first").value(true))
+                .andExpect(jsonPath("$.last").value(true));
+    }
+
+    @Test
+    @DisplayName("GET /equipos sin page ni size usa la primera página de 20")
+    void listarValoresPorDefecto() throws Exception {
+        // Arrange
+        when(equipoService.listar(any())).thenReturn(new PaginaEquipoResponse());
+
+        // Act
+        mockMvc.perform(get("/equipos").header(HttpHeaders.AUTHORIZATION, admin())).andExpect(status().isOk());
+
+        // Assert
+        verify(equipoService).listar(PageRequest.of(0, 20));
+    }
+
+    @Test
+    @DisplayName("GET /equipos?page=2&size=5 pide exactamente esa página")
+    void listarPasaPageYSize() throws Exception {
+        // Arrange
+        when(equipoService.listar(any())).thenReturn(new PaginaEquipoResponse());
+
+        // Act
+        mockMvc.perform(get("/equipos?page=2&size=5").header(HttpHeaders.AUTHORIZATION, admin())).andExpect(status().isOk());
+
+        // Assert
+        verify(equipoService).listar(PageRequest.of(2, 5));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @ValueSource(strings = {"page=-1", "size=0", "size=101", "size=-5"})
+    @DisplayName("GET /equipos con paginación fuera de rango: 400 y no se consulta nada")
+    void listarPaginacionInvalida(String consulta) throws Exception {
+        // Act + Assert
+        mockMvc.perform(get("/equipos?" + consulta).header(HttpHeaders.AUTHORIZATION, admin()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDACION_FALLIDA"));
+        verify(equipoService, never()).listar(any());
+    }
+
+    @Test
+    @DisplayName("GET /equipos?size=100 (el máximo) sí se acepta")
+    void listarTamanoMaximo() throws Exception {
+        // Arrange
+        when(equipoService.listar(any())).thenReturn(new PaginaEquipoResponse());
+
+        // Act + Assert
+        mockMvc.perform(get("/equipos?size=100").header(HttpHeaders.AUTHORIZATION, admin())).andExpect(status().isOk());
+        verify(equipoService).listar(PageRequest.of(0, 100));
     }
 
     @Test

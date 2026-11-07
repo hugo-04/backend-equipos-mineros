@@ -12,6 +12,11 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import com.mineria.equipos.equipo.entity.Equipo;
 import com.mineria.equipos.equipo.policy.IntervaloMantenimientoPolicy;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
+import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
 import com.mineria.equipos.testsupport.Datos;
@@ -116,6 +121,29 @@ class EquipoMapperTest {
 
         // Assert
         assertThat(existente.getCodigo()).isEqualTo("CAM-003");
+    }
+
+    @Test
+    @DisplayName("Page de Spring Data -> página del contrato: copia contenido, número, tamaño, totales y bandera first/last")
+    void paginaDelContrato() {
+        // Arrange: página 1 (la segunda) de tamaño 2 con 5 elementos en total
+        var pageable = PageRequest.of(1, 2);
+        Page<EquipoProjection> pagina = new PageImpl<>(List.of(
+                Datos.equipoProjection(3L, "A-3", "1", "0", 250), Datos.equipoProjection(4L, "A-4", "2", "0", 250)),
+                pageable, 5);
+
+        // Act
+        PaginaEquipoResponse respuesta = mapper.toPagina(pagina);
+
+        // Assert
+        assertThat(respuesta.getContent()).extracting(EquipoResponse::getCodigo).containsExactly("A-3", "A-4");
+        assertThat(respuesta.getPage()).isEqualTo(1);
+        assertThat(respuesta.getSize()).isEqualTo(2);
+        assertThat(respuesta.getTotalElements()).isEqualTo(5L);
+        assertThat(respuesta.getTotalPages()).isEqualTo(3);
+        assertThat(respuesta.getFirst()).isFalse();
+        assertThat(respuesta.getLast()).isFalse();
+        assertThat(mapper.toPagina(null)).isNull();
     }
 
     @Test

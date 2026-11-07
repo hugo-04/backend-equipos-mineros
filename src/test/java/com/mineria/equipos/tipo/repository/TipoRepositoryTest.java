@@ -1,10 +1,11 @@
 package com.mineria.equipos.tipo.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-import java.util.List;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,15 +29,43 @@ class TipoRepositoryTest {
     @DisplayName("la migración deja camión 250, excavadora 500 y perforadora 300")
     void tiposIniciales() {
         // Act
-        List<TipoProjection> catalogo = repository.findAllProjectedByOrderByIdAsc();
+        Page<TipoProjection> pagina = repository.findAllProjectedByOrderByIdAsc(PageRequest.of(0, 20));
 
         // Assert
-        assertThat(catalogo)
+        assertThat(pagina.getTotalElements()).isEqualTo(3);
+        assertThat(pagina.getContent())
                 .extracting(TipoProjection::getNombre, TipoProjection::getIntervaloHoras)
                 .containsExactly(
                         tuple("Camión", 250),
                         tuple("Excavadora", 500),
                         tuple("Perforadora", 300));
+    }
+
+    @Test
+    @DisplayName("pagina: con tamaño 2 el catálogo se reparte en 2 páginas, en orden")
+    void paginaElCatalogo() {
+        // Act
+        Page<TipoProjection> primera = repository.findAllProjectedByOrderByIdAsc(PageRequest.of(0, 2));
+        Page<TipoProjection> segunda = repository.findAllProjectedByOrderByIdAsc(PageRequest.of(1, 2));
+
+        // Assert
+        assertThat(primera.getContent()).extracting(TipoProjection::getNombre).containsExactly("Camión", "Excavadora");
+        assertThat(primera.getTotalPages()).isEqualTo(2);
+        assertThat(primera.isFirst()).isTrue();
+        assertThat(primera.isLast()).isFalse();
+        assertThat(segunda.getContent()).extracting(TipoProjection::getNombre).containsExactly("Perforadora");
+        assertThat(segunda.isLast()).isTrue();
+    }
+
+    @Test
+    @DisplayName("una página fuera de rango viene vacía pero con el total correcto")
+    void paginaFueraDeRango() {
+        // Act
+        Page<TipoProjection> pagina = repository.findAllProjectedByOrderByIdAsc(PageRequest.of(5, 2));
+
+        // Assert
+        assertThat(pagina.getContent()).isEmpty();
+        assertThat(pagina.getTotalElements()).isEqualTo(3);
     }
 
     @Test

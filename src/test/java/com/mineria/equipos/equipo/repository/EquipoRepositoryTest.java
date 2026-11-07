@@ -1,6 +1,8 @@
 package com.mineria.equipos.equipo.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Page;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
@@ -80,7 +82,7 @@ class EquipoRepositoryTest {
         entityManager.clear();
 
         // Act
-        List<EquipoProjection> proyecciones = repository.listarProyecciones();
+        List<EquipoProjection> proyecciones = repository.listarProyecciones(PageRequest.of(0, 100)).getContent();
 
         // Assert
         assertThat(proyecciones).extracting(EquipoProjection::getCodigo).contains("CAM-020", "PER-020");
@@ -89,6 +91,42 @@ class EquipoRepositoryTest {
             assertThat(p.getIntervaloHoras()).isEqualTo(300);
             assertThat(p.getTipoId()).isEqualTo(3L);
         });
+    }
+
+    @Test
+    @DisplayName("pagina: 3 equipos con tamaño 2 -> 2 páginas, en orden de id, con el total correcto")
+    void paginaLosEquipos() {
+        // Arrange
+        repository.saveAndFlush(nuevo("PAG-001", 1L, "1.0"));
+        repository.saveAndFlush(nuevo("PAG-002", 2L, "2.0"));
+        repository.saveAndFlush(nuevo("PAG-003", 3L, "3.0"));
+        entityManager.clear();
+
+        // Act
+        Page<EquipoProjection> primera = repository.listarProyecciones(PageRequest.of(0, 2));
+        Page<EquipoProjection> segunda = repository.listarProyecciones(PageRequest.of(1, 2));
+
+        // Assert: el COUNT escrito a mano cuenta los equipos con tipo (3), no las filas de la página
+        assertThat(primera.getTotalElements()).isEqualTo(3);
+        assertThat(primera.getTotalPages()).isEqualTo(2);
+        assertThat(primera.getContent()).extracting(EquipoProjection::getCodigo).containsExactly("PAG-001", "PAG-002");
+        assertThat(primera.isFirst()).isTrue();
+        assertThat(segunda.getContent()).extracting(EquipoProjection::getCodigo).containsExactly("PAG-003");
+        assertThat(segunda.isLast()).isTrue();
+    }
+
+    @Test
+    @DisplayName("una página fuera de rango viene vacía pero con el total correcto")
+    void paginaFueraDeRango() {
+        // Arrange
+        repository.saveAndFlush(nuevo("PAG-010", 1L, "1.0"));
+
+        // Act
+        Page<EquipoProjection> pagina = repository.listarProyecciones(PageRequest.of(4, 10));
+
+        // Assert
+        assertThat(pagina.getContent()).isEmpty();
+        assertThat(pagina.getTotalElements()).isEqualTo(1);
     }
 
     @Test

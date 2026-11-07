@@ -6,10 +6,13 @@ import java.util.List;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.springframework.data.domain.Page;
 
 import com.mineria.equipos.generated.model.MantenimientoResponse;
+import com.mineria.equipos.generated.model.PaginaMantenimientoResponse;
 import com.mineria.equipos.mantenimiento.entity.Mantenimiento;
 import com.mineria.equipos.mantenimiento.repository.projection.MantenimientoProjection;
+import com.mineria.equipos.shared.pagination.MapeoDePagina;
 
 /** Convierte la proyección del historial al DTO del contrato y arma la entidad de un registro nuevo. */
 @Mapper
@@ -18,6 +21,9 @@ public interface MantenimientoMapper {
     MantenimientoResponse toResponse(MantenimientoProjection projection);
 
     List<MantenimientoResponse> toResponses(List<MantenimientoProjection> projections);
+
+    @MapeoDePagina
+    PaginaMantenimientoResponse toPagina(Page<MantenimientoProjection> pagina);
 
     /** Arma el registro del historial con el horómetro que tenía el equipo al registrarlo. */
     @Mapping(target = "id", ignore = true)

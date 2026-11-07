@@ -92,7 +92,8 @@ class FlujoCompletoIntegrationTest {
                 .andExpect(jsonPath("$.estado").value("OK"));
         mockMvc.perform(get("/equipos/" + id + "/mantenimientos").header(HttpHeaders.AUTHORIZATION, bearer))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1));
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.totalElements").value(1));
 
         // el nuevo ciclo vuelve a vencer 250 h después del mantenimiento
         mockMvc.perform(put("/equipos/" + id).header(HttpHeaders.AUTHORIZATION, bearer)
@@ -119,10 +120,10 @@ class FlujoCompletoIntegrationTest {
         // Act + Assert
         mockMvc.perform(get("/tipos").header(HttpHeaders.AUTHORIZATION, bearer))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.nombre=='Excavadora')].intervaloHoras").value(500));
+                .andExpect(jsonPath("$.content[?(@.nombre=='Excavadora')].intervaloHoras").value(500));
         mockMvc.perform(get("/equipos").header(HttpHeaders.AUTHORIZATION, bearer))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[?(@.codigo=='EXC-INT-1')].estado").value("OK"));
+                .andExpect(jsonPath("$.content[?(@.codigo=='EXC-INT-1')].estado").value("OK"));
     }
 
     @Test

@@ -2,14 +2,14 @@ package com.mineria.equipos.mantenimiento.service.impl;
 
 import java.math.BigDecimal;
 import java.time.Clock;
-import java.util.List;
-
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.generated.model.MantenimientoRequest;
 import com.mineria.equipos.generated.model.MantenimientoResponse;
+import com.mineria.equipos.generated.model.PaginaMantenimientoResponse;
 import com.mineria.equipos.mantenimiento.entity.Mantenimiento;
 import com.mineria.equipos.mantenimiento.mapper.MantenimientoMapper;
 import com.mineria.equipos.mantenimiento.repository.MantenimientoRepository;
@@ -65,8 +65,8 @@ public class MantenimientoServiceImpl implements MantenimientoService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<MantenimientoResponse> listarPorEquipo(Long equipoId) {
+    public PaginaMantenimientoResponse listarPorEquipo(Long equipoId, Pageable pageable) {
         equipoService.verificarExiste(equipoId);
-        return mapper.toResponses(repository.findByEquipoIdOrderByFechaDescIdDesc(equipoId));
+        return mapper.toPagina(repository.findByEquipoIdOrderByFechaDescIdDesc(equipoId, pageable));
     }
 }
