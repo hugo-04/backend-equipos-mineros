@@ -10,5 +10,5 @@ public interface EquipoQueryPort {
 
     List<EquipoView> listar();
 
-    Optional<EquipoView> buscarPorId(Long id);
+    Optional<EquipoView> buscarVistaPorId(Long id);
 }

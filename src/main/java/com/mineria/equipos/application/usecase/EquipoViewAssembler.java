@@ -25,7 +25,7 @@ class EquipoViewAssembler {
     private final MantenimientoPolicy mantenimientoPolicy;
 
     EquipoView porId(Long id) {
-        return equipoQuery.buscarPorId(id)
+        return equipoQuery.buscarVistaPorId(id)
                 .map(this::conEstadoDeMantenimiento)
                 .orElseThrow(() -> new EquipoNotFoundException(id));
     }
