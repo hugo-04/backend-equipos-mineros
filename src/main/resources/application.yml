@@ -1,9 +1,9 @@
-# Configuración base. Todo lo sensible viene del entorno (ver .env.example); nada de claves en el repo.
+# Configuración base. Acá no hay nada sensible: claves y URLs entran por variables de entorno (mira .env.example).
 spring:
   application:
     name: equipos-mineros
   autoconfigure:
-    # La autenticacion es por JWT contra nuestra tabla usuario; no queremos el usuario por defecto de Spring
+    # El login es con JWT contra nuestra tabla usuario. Se excluye esto para que Spring no cree su usuario por defecto con clave aleatoria.
     exclude: org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration
   web:
     locale: es
@@ -13,12 +13,12 @@ spring:
     username: ${DB_USER}
     password: ${DB_PASSWORD}
     hikari:
-      # Si la BD no responde, /health debe fallar rápido (503) y no quedarse colgado
+      # Si la BD no contesta, el /health tiene que responder 503 rápido y no quedarse esperando
       connection-timeout: 5000
   jpa:
     open-in-view: false
     hibernate:
-      # El esquema lo manda Flyway; Hibernate solo valida que coincida
+      # Las tablas las crea Flyway. Hibernate solo comprueba que las entidades coincidan con ellas.
       ddl-auto: validate
     properties:
       hibernate:
@@ -29,26 +29,26 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
-    # Para el ROLLBACK: una imagen anterior debe poder arrancar aunque la BD ya tenga migraciones
-    # más nuevas (que esa imagen no conoce). Verificado: la versión vieja arranca contra un esquema con V6.
+    # Para que el rollback funcione: una imagen anterior tiene que poder arrancar aunque la BD ya tenga migraciones
+    # más nuevas que ella no conoce. Se probó con una versión que solo tenía V1 a V5 contra un esquema que ya tenía V6.
     ignore-migration-patterns: "*:future"
   jackson:
     deserialization:
-      # Rechaza propiedades desconocidas en el body
+      # Si el body trae una propiedad que el contrato no conoce, se rechaza (no se ignora en silencio)
       fail-on-unknown-properties: true
     mapper:
-      # "12.5" (texto) no se acepta como número: el contrato pide un number
+      # Un "12.5" entre comillas no se acepta donde el contrato pide un número
       allow-coercion-of-scalars: false
     default-property-inclusion: non_null
 
 logging:
   pattern:
-    # El traceId identifica la petición: sale en todos los logs y en el ErrorResponse que ve el cliente
+    # Cada línea de log lleva el traceId de su petición. El mismo id sale en el error que ve el cliente, así se puede rastrear.
     level: "%5p [traceId=%X{traceId:-}]"
 
 server:
   port: ${PORT:8080}
-  # Detrás del proxy del hosting: toma la IP y el esquema reales de X-Forwarded-* (Tomcat solo confía en proxies internos)
+  # En Railway hay un proxy delante de la app. Con esto se toma la IP y el esquema reales de X-Forwarded-*; Tomcat solo le cree a proxies internos.
   forward-headers-strategy: native
   shutdown: graceful
   error:
@@ -62,12 +62,12 @@ springdoc:
 
 app:
   security:
-    # Frena la fuerza bruta del login: fallos permitidos por IP dentro de la ventana (luego 429 + Retry-After)
+    # Contra la fuerza bruta del login: cuántos fallos se permiten por IP dentro de la ventana. Después se responde 429 con Retry-After.
     login-max-intentos: ${LOGIN_MAX_INTENTOS:10}
     login-ventana-segundos: ${LOGIN_VENTANA_SEGUNDOS:300}
-    # Tamaño máximo del cuerpo de una petición (bytes): más grande => 413
+    # Tamaño máximo del cuerpo de una petición, en bytes. Si lo pasa, se responde 413.
     cuerpo-max-bytes: ${CUERPO_MAX_BYTES:16384}
-  # Tag de la imagen que está corriendo; lo expone /health para validar los despliegues
+  # El tag de la imagen que está corriendo. El /health lo devuelve y deploy.sh lo usa para confirmar que quedó la versión nueva.
   version: ${APP_VERSION:dev}
   jwt:
     secret: ${JWT_SECRET}

@@ -4,8 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Punto de entrada del servicio "Registro de equipos mineros".
- * No tiene lógica: solo arranca Spring Boot y deja que cada capa se cablee sola.
+ * Por acá arranca el servicio "Registro de equipos mineros". No tiene lógica, solo levanta Spring Boot.
  */
 @SpringBootApplication
 public class EquiposApplication {

@@ -1,4 +1,4 @@
-# Perfil para desarrollo en la máquina local: más logs para depurar.
+# Perfil para trabajar en la máquina local: deja más logs (incluido el SQL de Hibernate) para depurar.
 logging:
   level:
     com.mineria.equipos: DEBUG
