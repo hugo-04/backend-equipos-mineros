@@ -5,7 +5,7 @@ import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
 import com.mineria.equipos.application.port.in.AsegurarAdministradorUseCase;
-import com.mineria.equipos.infrastructure.config.AppProperties;
+import com.mineria.equipos.shared.config.AppProperties;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

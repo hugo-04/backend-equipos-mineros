@@ -16,7 +16,7 @@ import org.springframework.boot.DefaultApplicationArguments;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.mineria.equipos.application.port.in.AsegurarAdministradorUseCase;
-import com.mineria.equipos.infrastructure.config.AppProperties;
+import com.mineria.equipos.shared.config.AppProperties;
 
 import java.util.List;
 

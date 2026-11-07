@@ -1,4 +1,4 @@
-package com.mineria.equipos.infrastructure.config;
+package com.mineria.equipos.shared.config;
 
 import java.util.List;
 

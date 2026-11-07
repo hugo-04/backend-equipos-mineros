@@ -19,7 +19,7 @@ import com.mineria.equipos.application.port.out.TokenProviderPort;
 import com.mineria.equipos.application.view.SesionView;
 import com.mineria.equipos.domain.model.Rol;
 import com.mineria.equipos.domain.model.Usuario;
-import com.mineria.equipos.infrastructure.config.AppProperties;
+import com.mineria.equipos.shared.config.AppProperties;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;

@@ -9,7 +9,7 @@ import com.mineria.equipos.application.view.EstadoSalud;
 import com.mineria.equipos.generated.api.SaludApi;
 import com.mineria.equipos.generated.model.HealthResponse;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.HealthWebMapper;
-import com.mineria.equipos.infrastructure.config.AppProperties;
+import com.mineria.equipos.shared.config.AppProperties;
 
 import lombok.RequiredArgsConstructor;
 

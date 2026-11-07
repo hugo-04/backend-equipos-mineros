@@ -17,8 +17,8 @@ import com.mineria.equipos.infrastructure.adapter.in.web.mapper.AuthWebMapperImp
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.EquipoWebMapperImpl;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.HealthWebMapperImpl;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.MantenimientoWebMapperImpl;
-import com.mineria.equipos.infrastructure.config.ApplicationConfig;
-import com.mineria.equipos.infrastructure.config.CorsConfig;
+import com.mineria.equipos.shared.config.ApplicationConfig;
+import com.mineria.equipos.shared.config.CorsConfig;
 import com.mineria.equipos.infrastructure.security.JwtService;
 import com.mineria.equipos.infrastructure.security.SecurityConfig;
 import com.mineria.equipos.infrastructure.security.SecurityErrorHandlers;
