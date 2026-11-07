@@ -44,10 +44,10 @@ com.mineria.equipos
 ├── equipo/
 │   ├── controller/        EquipoController (implementa la interfaz generada por OpenAPI)
 │   ├── service/           EquipoService (interfaz)
-│   │   └── impl/          EquipoServiceImpl
+│   │   └── impl/          EquipoServiceImpl (aquí viven las reglas de negocio)
 │   ├── repository/        EquipoRepository
 │   │   └── projection/    EquipoProjection (lecturas con JOIN al tipo, sin N+1)
-│   ├── entity/            Equipo (JPA + reglas: el horómetro no baja, reinicio del ciclo)
+│   ├── entity/            Equipo (JPA: solo datos)
 │   ├── mapper/            EquipoMapper (MapStruct)
 │   └── policy/            MantenimientoPolicy (Strategy) · IntervaloMantenimientoPolicy · EstadoMantenimiento
 ├── tipo/                  controller · service/impl · repository(+projection) · entity · mapper
@@ -80,7 +80,10 @@ Los DTOs los genera el plugin de OpenAPI en `target/generated-sources` con paque
 2. **Sin ciclos**: `mantenimiento` depende de `equipo` y `equipo` depende de `tipo`; nunca al revés.
 3. El **controller** depende solo de interfaces de `service`: nunca de repositorios, entidades ni mappers.
 4. Las **excepciones** viven solo en `shared/exception`, no repartidas por módulo.
-5. Como controller, service e impl están en paquetes distintos, las clases son `public`: el control de acceso lo hace
+5. Las **entidades solo guardan datos**: ninguna validación ni regla de negocio vive en ellas (ni lanzan excepciones del
+   negocio). Todo eso va en el `service` (responsabilidad única): por ejemplo, que el horómetro no sea negativo ni baje, que el
+   ciclo de mantenimiento arranque en 0 o que se reinicie al registrar un mantenimiento está en `EquipoServiceImpl`.
+6. Como controller, service e impl están en paquetes distintos, las clases son `public`: el control de acceso lo hace
    ArchUnit, no la visibilidad de Java.
 
 Cómo viaja una petición: `Controller → Service (interfaz) → ServiceImpl → Repository → entidad JPA`. Los `GET` leen con
@@ -226,23 +229,22 @@ mvn test          # pruebas
 mvn verify        # pruebas + cobertura: FALLA si instrucciones o ramas < 90%   (o: make verify)
 ```
 
-Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,8 % de instrucciones y 95,9 % de ramas**
-(212 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI) y la clase `EquiposApplication`; las entidades sí
-cuentan porque tienen reglas de negocio. Las ramas sin cubrir son verificaciones de `null` inalcanzables que genera MapStruct.
+Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,8 % de instrucciones y 92,0 % de ramas**
+(211 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI) y la clase `EquiposApplication`; las entidades sí
+cuentan. Las ramas sin cubrir son verificaciones de `null` inalcanzables que genera MapStruct.
 Las pruebas replican la misma estructura de paquetes que el código (`src/test/java/...`).
 
 | Qué | Dónde |
 |---|---|
-| Reglas de negocio en la entidad: el horómetro no baja, reinicio del ciclo | `equipo/entity/EquipoTest` |
 | Regla de mantenimiento: justo debajo, exacto, por encima del intervalo y reinicio del ciclo | `equipo/policy/ReglaMantenimientoTest` |
-| Servicios (JUnit 5 + Mockito, patrón **AAA**: Arrange/Act/Assert): duplicados, horómetro inválido, no encontrado | `*/service/impl/*ServiceImplTest` |
+| Servicios y sus reglas de negocio (JUnit 5 + Mockito, patrón **AAA**: Arrange/Act/Assert): horómetro que no baja ni es negativo, ciclo en 0 y reinicio, duplicados, no encontrado | `*/service/impl/*ServiceImplTest` |
 | Controllers con MockMvc + seguridad real, validaciones del contrato | `*/controller/*ControllerTest` |
 | `GlobalExceptionHandler` y excepciones | `shared/exception/**` |
 | JWT: válido, expirado, malformado, firma falsa, ausente; CORS | `auth/security/**` |
 | Mappers (incluidos nulos) | `*/mapper/*MapperTest` |
 | Repositorios con Flyway real | `*/repository/*RepositoryTest` |
 | Flujo completo (login → CRUD → mantenimiento → baja) y rollback conjunto equipo + mantenimiento | `integracion/**` |
-| Arquitectura de módulos (acceso entre módulos, ciclos, controllers, excepciones) | `arquitectura/ArquitecturaTest` |
+| Arquitectura de módulos (acceso entre módulos, ciclos, controllers, entidades solo con datos, excepciones) | `arquitectura/ArquitecturaTest` |
 | Script e2e contra `docker compose` | `scripts/e2e.sh` (`make e2e`) |
 | `deploy.sh` y su rollback con hosting simulado | `scripts/test/deploy_test.sh` (`make test-deploy`) |
 
@@ -374,7 +376,7 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
   ajustar `HEALTH_RETRIES` según lo que tarde Railway en construir y arrancar.
 - **Monolito modular (refactor de estructura, sin cambios de comportamiento).** Se pasó de capas hexagonales a módulos por
   funcionalidad. Desaparecen el dominio separado, los puertos, los adaptadores y los *views*: cada módulo tiene su `entity`
-  JPA (con las reglas que dependen solo de sí misma), su `repository`, su `service` (interfaz + `impl`) y su `mapper`.
+  JPA (solo datos), su `repository`, su `service` (interfaz + `impl`) y su `mapper`.
   El contrato `openapi.yaml`, las migraciones y las respuestas de la API no cambiaron.
 - **DTOs en un solo paquete generado.** Se generan con una única ejecución del plugin en
   `com.mineria.equipos.generated.api|model`. Separarlos por módulo exigiría varias ejecuciones del plugin sobre el mismo
@@ -389,7 +391,10 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
   `TokenJwtException` se movió a `shared/exception` porque las excepciones no pueden definirse fuera de esa carpeta.
 - **Login con `UserDetailsService` y `PasswordEncoder`** de Spring Security (`UsuarioDetailsService`), en lugar de un hasher propio.
   El error sigue siendo el mismo para usuario inexistente y clave incorrecta.
-- **La cobertura ya no excluye las entidades**: ahora tienen reglas de negocio y se prueban.
+- **Entidades solo con datos; las reglas en el `service`.** Validaciones y reglas (horómetro no negativo ni decreciente, ciclo en 0 y
+  su reinicio) viven en `EquipoServiceImpl`; el armado de las entidades lo hacen los mappers (MapStruct). ArchUnit impide que una
+  entidad dependa de excepciones, services, políticas o mappers.
+- **La cobertura no excluye las entidades**: cuentan igual que el resto del código.
 - El volumen de `docker compose` y el nombre del proyecto (`equipos-mineros`) son propios de este repo.
 
 ## Uso de IA
