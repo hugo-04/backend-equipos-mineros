@@ -206,7 +206,7 @@
             </plugin>
             <!--
                 Cobertura minima: si baja de jacoco.minimo (90%) en instrucciones o ramas, "mvn verify" falla.
-                Se excluye solo lo generado (OpenAPI), la clase Application y las entidades JPA triviales.
+                Se excluye solo lo generado (OpenAPI) y la clase Application. Lo generado por Lombok se filtra solo (lombok.config).
             -->
             <plugin>
                 <groupId>org.jacoco</groupId>
@@ -216,7 +216,6 @@
                     <excludes>
                         <exclude>com/mineria/equipos/generated/**</exclude>
                         <exclude>com/mineria/equipos/EquiposApplication.class</exclude>
-                        <exclude>com/mineria/equipos/infrastructure/adapter/out/persistence/entity/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
