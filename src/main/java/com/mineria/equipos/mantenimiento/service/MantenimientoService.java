@@ -6,12 +6,12 @@ import com.mineria.equipos.generated.model.MantenimientoRequest;
 import com.mineria.equipos.generated.model.MantenimientoResponse;
 import com.mineria.equipos.generated.model.PaginaMantenimientoResponse;
 
-/** Servicio del historial de mantenimientos de un equipo. */
+/** Registrar mantenimientos y consultar el historial de un equipo. */
 public interface MantenimientoService {
 
-    /** Registra un mantenimiento y reinicia el ciclo del equipo, todo en una sola transacción. */
+    /** Guarda el mantenimiento y reinicia el ciclo del equipo, las dos cosas en una sola transacción. */
     MantenimientoResponse registrar(Long equipoId, MantenimientoRequest request);
 
-    /** Una página del historial de un equipo, del más reciente al más antiguo. */
+    /** Una página del historial del equipo, empezando por el más reciente. */
     PaginaMantenimientoResponse listarPorEquipo(Long equipoId, Pageable pageable);
 }

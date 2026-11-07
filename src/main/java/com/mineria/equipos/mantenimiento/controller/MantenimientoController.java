@@ -15,7 +15,7 @@ import com.mineria.equipos.shared.pagination.Paginacion;
 
 import lombok.RequiredArgsConstructor;
 
-/** Endpoints del historial de mantenimientos de un equipo. Solo delega en el servicio. */
+/** Los endpoints del historial de mantenimientos de un equipo. Le pasa todo al servicio. */
 @RestController
 @RequiredArgsConstructor
 public class MantenimientoController implements MantenimientosApi {

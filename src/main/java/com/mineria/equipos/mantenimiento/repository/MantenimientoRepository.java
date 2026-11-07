@@ -9,10 +9,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.mineria.equipos.mantenimiento.entity.Mantenimiento;
 import com.mineria.equipos.mantenimiento.repository.projection.MantenimientoProjection;
 
-/** Repositorio Spring Data del historial de mantenimientos. */
+/** Acceso a la tabla mantenimiento. */
 public interface MantenimientoRepository extends JpaRepository<Mantenimiento, Long> {
 
-    /** El más reciente primero; el id desempata dos mantenimientos con la misma fecha. */
+    /** Del más reciente al más antiguo. Si dos tienen la misma fecha, desempata el id. */
     Page<MantenimientoProjection> findByEquipoIdOrderByFechaDescIdDesc(Long equipoId, Pageable pageable);
 
     Optional<MantenimientoProjection> findProjectedById(Long id);

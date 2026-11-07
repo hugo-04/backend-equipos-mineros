@@ -3,7 +3,7 @@ package com.mineria.equipos.mantenimiento.repository.projection;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-/** Proyección de solo lectura de una línea del historial de mantenimientos. */
+/** Una línea del historial tal como se muestra; es de solo lectura. */
 public interface MantenimientoProjection {
 
     Long getId();

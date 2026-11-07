@@ -14,7 +14,7 @@ import com.mineria.equipos.mantenimiento.entity.Mantenimiento;
 import com.mineria.equipos.mantenimiento.repository.projection.MantenimientoProjection;
 import com.mineria.equipos.shared.pagination.MapeoDePagina;
 
-/** Convierte la proyección del historial al DTO del contrato y arma la entidad de un registro nuevo. */
+/** Pasa la proyección del historial al DTO de la API y arma la entidad cuando se registra uno nuevo. */
 @Mapper
 public interface MantenimientoMapper {
 
@@ -25,7 +25,7 @@ public interface MantenimientoMapper {
     @MapeoDePagina
     PaginaMantenimientoResponse toPagina(Page<MantenimientoProjection> pagina);
 
-    /** Arma el registro del historial con el horómetro que tenía el equipo al registrarlo. */
+    /** El horómetro que se guarda es el que tenía el equipo en el momento de registrar. */
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "horometroAlRegistrar", source = "horometro")
     Mantenimiento toEntity(Long equipoId, BigDecimal horometro, String notas, Instant fecha);

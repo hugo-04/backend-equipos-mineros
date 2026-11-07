@@ -20,10 +20,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Registra y consulta mantenimientos. Para todo lo que toca al equipo (que exista, reiniciar su ciclo)
- * usa {@link EquipoService}: este módulo nunca accede al repositorio ni a la entidad de equipo.
- * Registrar ocurre en una sola transacción: si falla guardar el historial se deshace también el
- * reinicio del ciclo, así no queda nada a medias (ni historial sin reinicio, ni al revés).
+ * Registra y consulta mantenimientos. Todo lo que tenga que ver con el equipo (que exista, reiniciar su
+ * ciclo) lo pide a través de {@link EquipoService}; este módulo nunca toca el repositorio ni la entidad de
+ * equipo. Registrar va en una sola transacción: si falla el guardado del historial también se deshace el
+ * reinicio del ciclo, para que no quede un reinicio sin historial ni un historial sin reinicio.
  */
 @Slf4j
 @Service
@@ -39,8 +39,8 @@ public class MantenimientoServiceImpl implements MantenimientoService {
     @Transactional
     public MantenimientoResponse registrar(Long equipoId, MantenimientoRequest request) {
         try {
-            // El módulo equipo reinicia el ciclo (404 si no existe) y devuelve el horómetro actual,
-            // que es el que queda guardado en el historial
+            // El módulo equipo reinicia el ciclo (da 404 si el equipo no existe) y devuelve el horómetro
+            // de ese momento, que es el que se guarda en el historial
             BigDecimal horometro = equipoService.reiniciarCiclo(equipoId);
             Mantenimiento guardado = repository.saveAndFlush(
                     mapper.toEntity(equipoId, horometro, request.getNotas(), clock.instant()));
@@ -60,8 +60,8 @@ public class MantenimientoServiceImpl implements MantenimientoService {
     }
 
     /**
-     * Primero confirma que el equipo exista: así un id inexistente responde 404 en lugar de una
-     * lista vacía que parecería "sin mantenimientos".
+     * Antes de listar confirma que el equipo exista. Si no, un id que no existe devolvería una lista vacía
+     * y parecería un equipo sin mantenimientos, cuando lo correcto es un 404.
      */
     @Override
     @Transactional(readOnly = true)

@@ -14,10 +14,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Registro histórico de un mantenimiento hecho a un equipo (fila de la tabla mantenimiento).
- * Guarda el horómetro que tenía el equipo en ese momento, para poder auditar los ciclos.
- * Solo guarda el id del equipo (sin relación JPA): el módulo equipo es el dueño de esa entidad
- * y el borrado en cascada del historial lo hace la base de datos.
+ * Una línea del historial: un mantenimiento que se le hizo a un equipo. Guarda el horómetro que tenía el
+ * equipo en ese momento, para poder revisar después cada ciclo. Solo lleva el id del equipo, sin relación
+ * JPA, porque esa entidad es del módulo equipo; si el equipo se borra, la base borra su historial en cascada.
  */
 @Getter
 @Setter
