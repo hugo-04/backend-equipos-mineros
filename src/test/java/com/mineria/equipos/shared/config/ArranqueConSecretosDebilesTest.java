@@ -4,6 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Configuration;
@@ -23,6 +25,10 @@ class ArranqueConSecretosDebilesTest {
     }
 
     private ApplicationContextRunner arranque(String jwt, String adminPassword) {
+        return arranque(jwt, adminPassword, "http://localhost:3000");
+    }
+
+    private ApplicationContextRunner arranque(String jwt, String adminPassword, String origenes) {
         return new ApplicationContextRunner()
                 .withUserConfiguration(Config.class)
                 .withPropertyValues(
@@ -31,7 +37,7 @@ class ArranqueConSecretosDebilesTest {
                         "app.jwt.expiration-minutes=30",
                         "app.admin.username=admin",
                         "app.admin.password=" + adminPassword,
-                        "app.cors.allowed-origins=http://localhost:3000");
+                        "app.cors.allowed-origins=" + origenes);
     }
 
     @Test
@@ -81,5 +87,24 @@ class ArranqueConSecretosDebilesTest {
     @DisplayName("sin ADMIN_PASSWORD no se crea admin y la configuración sigue siendo válida")
     void sinAdminEsValido() {
         arranque(JWT_FUERTE, "").run(contexto -> assertThat(contexto).hasNotFailed());
+    }
+
+    @ParameterizedTest(name = "[{index}] origen inválido: {0}")
+    @ValueSource(strings = {"*", "http://*.vercel.app", "https://app.example.com/", "app.example.com", "ftp://app.example.com",
+            "https://app.example.com/ruta", "http://localhost:3000,*"})
+    @DisplayName("rechaza orígenes CORS con comodín, sin esquema, con ruta o con '/' final")
+    void rechazaOrigenesInvalidos(String origenes) {
+        arranque(JWT_FUERTE, ADMIN_FUERTE, origenes).run(contexto -> {
+            assertThat(contexto).hasFailed();
+            assertThat(contexto.getStartupFailure()).hasStackTraceContaining("CORS_ALLOWED_ORIGINS");
+        });
+    }
+
+    @ParameterizedTest(name = "[{index}] origen válido: {0}")
+    @ValueSource(strings = {"http://localhost:3000", "https://equipos-mineros.vercel.app",
+            "https://app.example.com,http://localhost:5173"})
+    @DisplayName("acepta URLs http(s) completas, solas o en lista")
+    void aceptaOrigenesValidos(String origenes) {
+        arranque(JWT_FUERTE, ADMIN_FUERTE, origenes).run(contexto -> assertThat(contexto).hasNotFailed());
     }
 }

@@ -11,6 +11,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -55,6 +56,11 @@ public record AppProperties(
         }
     }
 
-    public record Cors(@NotEmpty List<String> allowedOrigins) {
+    /**
+     * Orígenes permitidos por CORS: URLs completas (http o https, con host y puerto opcional), sin "/" al final y
+     * sin comodines. Un "*" o un valor mal escrito hace fallar el arranque en lugar de abrir la API a cualquiera.
+     */
+    public record Cors(@NotEmpty List<@Pattern(regexp = "^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$",
+            message = "CORS_ALLOWED_ORIGINS solo admite URLs http(s) completas, sin comodines ni '/' al final") String> allowedOrigins) {
     }
 }
