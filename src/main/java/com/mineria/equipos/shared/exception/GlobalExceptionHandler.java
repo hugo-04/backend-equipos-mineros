@@ -61,7 +61,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private final ErrorResponseFactory errores;
 
-    // ---------- Errores de negocio ----------
+    // Errores de negocio
 
     @ExceptionHandler({EquipoNotFoundException.class, TipoEquipoNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNoEncontrado(DomainException ex, HttpServletRequest request) {
@@ -86,7 +86,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return responder(HttpStatus.UNAUTHORIZED, ex.getCodigo(), ex.getMessage(), request);
     }
 
-    // ---------- Validación ----------
+    // Validación
 
     /** El body no pasó las validaciones del contrato (@Valid sobre los DTOs generados). */
     @Override
@@ -157,7 +157,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Un parámetro de la petición tiene un tipo incorrecto", servletRequest(request), List.of(detalle)));
     }
 
-    // ---------- Base de datos y autenticación ----------
+    // Base de datos y autenticación
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex,
@@ -181,7 +181,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "No tienes permiso para realizar esta operación", request);
     }
 
-    // ---------- Lo demás ----------
+    // Lo demás
 
     /** Los errores que Spring MVC resuelve solo (ruta inexistente, método no permitido...), con nuestro formato. */
     @Override
@@ -199,7 +199,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Ocurrió un error inesperado. Intenta de nuevo más tarde", request);
     }
 
-    // ---------- Auxiliares ----------
+    // Auxiliares
 
     private ResponseEntity<Object> responderValidacion(List<ErrorDetail> detalles, WebRequest request) {
         return cuerpo(responder(HttpStatus.BAD_REQUEST, VALIDACION_FALLIDA,
