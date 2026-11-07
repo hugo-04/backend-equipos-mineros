@@ -20,6 +20,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,7 +43,7 @@ import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.Tokens;
 
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class AuthServiceImplTest {
 
     @Mock
@@ -136,6 +138,21 @@ class AuthServiceImplTest {
         // Assert
         verify(passwordEncoder, times(1)).encode(anyString());
         verify(passwordEncoder, times(3)).matches(eq("x"), anyString());
+    }
+
+    @Test
+    @DisplayName("login: el nombre de usuario se limpia de saltos de línea antes de escribirlo en el log (sin líneas falsas)")
+    void noPermiteInyectarLineasDeLog(CapturedOutput salida) {
+        // Arrange
+        when(userDetailsService.loadUserByUsername(anyString())).thenThrow(new UsernameNotFoundException("no existe"));
+
+        // Act
+        assertThatThrownBy(() -> service.login(new LoginRequest("admin\r\n2026-11-07 INFO Login correcto: usuario=root", "x")))
+                .isInstanceOf(CredencialesInvalidasException.class);
+
+        // Assert
+        assertThat(salida.getAll()).contains("Login rechazado para el usuario admin__2026-11-07 INFO Login correcto");
+        assertThat(salida.getAll()).doesNotContain("\n2026-11-07 INFO Login correcto");
     }
 
     @Test

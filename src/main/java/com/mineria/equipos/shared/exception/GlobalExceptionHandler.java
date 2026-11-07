@@ -31,6 +31,7 @@ import com.mineria.equipos.shared.exception.HorometroInvalidoException;
 import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
 import com.mineria.equipos.generated.model.ErrorDetail;
 import com.mineria.equipos.generated.model.ErrorResponse;
+import com.mineria.equipos.shared.trace.LogSeguro;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -161,7 +162,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex,
                                                             HttpServletRequest request) {
-        log.warn("Violación de integridad de datos en {}: {}", request.getRequestURI(),
+        log.warn("Violación de integridad de datos en {}: {}", LogSeguro.limpiar(request.getRequestURI()),
                 ex.getMostSpecificCause().getMessage());
         return responder(HttpStatus.CONFLICT, CONFLICTO_DE_DATOS,
                 "La operación entra en conflicto con los datos existentes", request);
@@ -193,7 +194,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     /** Red de seguridad: cualquier error no previsto. El detalle va al log, nunca al cliente. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleInesperado(Exception ex, HttpServletRequest request) {
-        log.error("Error inesperado en {} {}", request.getMethod(), request.getRequestURI(), ex);
+        log.error("Error inesperado en {} {}", request.getMethod(), LogSeguro.limpiar(request.getRequestURI()), ex);
         return responder(HttpStatus.INTERNAL_SERVER_ERROR, ERROR_INTERNO,
                 "Ocurrió un error inesperado. Intenta de nuevo más tarde", request);
     }

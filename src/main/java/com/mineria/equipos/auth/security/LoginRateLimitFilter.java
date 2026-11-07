@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.mineria.equipos.shared.exception.ErrorResponseWriter;
+import com.mineria.equipos.shared.trace.LogSeguro;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -42,7 +43,7 @@ public class LoginRateLimitFilter extends OncePerRequestFilter {
                                     FilterChain chain) throws ServletException, IOException {
         String cliente = request.getRemoteAddr();
         if (limitador.estaBloqueado(cliente)) {
-            log.warn("Login bloqueado por exceso de intentos fallidos desde {}", cliente);
+            log.warn("Login bloqueado por exceso de intentos fallidos desde {}", LogSeguro.limpiar(cliente));
             response.setHeader(HttpHeaders.RETRY_AFTER, String.valueOf(limitador.segundosParaReintentar(cliente)));
             escritor.escribir(response, HttpStatus.TOO_MANY_REQUESTS, CODIGO,
                     "Demasiados intentos de inicio de sesión. Espera un momento e inténtalo de nuevo",

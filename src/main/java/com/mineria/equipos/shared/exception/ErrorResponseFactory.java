@@ -9,6 +9,8 @@ import org.springframework.stereotype.Component;
 import com.mineria.equipos.generated.model.ErrorDetail;
 import com.mineria.equipos.generated.model.ErrorResponse;
 
+import com.mineria.equipos.shared.trace.TraceId;
+
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -30,6 +32,7 @@ public class ErrorResponseFactory {
         ErrorResponse respuesta = new ErrorResponse(
                 clock.instant(), status.value(), status.getReasonPhrase(), codigo, mensaje, path);
         respuesta.setDetails(detalles);
+        respuesta.setTraceId(TraceId.actual());
         return respuesta;
     }
 

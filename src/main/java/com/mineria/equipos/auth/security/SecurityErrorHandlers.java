@@ -4,23 +4,28 @@ import java.io.IOException;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import com.mineria.equipos.shared.exception.ErrorResponseWriter;
 import com.mineria.equipos.shared.exception.TokenJwtException;
+import com.mineria.equipos.shared.trace.LogSeguro;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Respuestas 401 y 403 de la cadena de seguridad. Los errores de seguridad ocurren antes de llegar a
  * los controllers, así que el GlobalExceptionHandler no los ve; estos handlers escriben el mismo
  * {@code ErrorResponse} del contrato para que el cliente siempre reciba un solo formato.
  */
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class SecurityErrorHandlers implements AuthenticationEntryPoint, AccessDeniedHandler {
@@ -41,6 +46,8 @@ public class SecurityErrorHandlers implements AuthenticationEntryPoint, AccessDe
             case TokenJwtException.TOKEN_INVALIDO -> "El token no es válido";
             default -> "Se requiere un token en el header Authorization: Bearer <token>";
         };
+        log.warn("Seguridad: acceso no autenticado {} {} motivo={}", request.getMethod(),
+                LogSeguro.limpiar(request.getRequestURI()), codigo);
         escritor.escribir(response, HttpStatus.UNAUTHORIZED, codigo, mensaje, request.getRequestURI());
     }
 
@@ -48,6 +55,10 @@ public class SecurityErrorHandlers implements AuthenticationEntryPoint, AccessDe
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {
+        Authentication autenticacion = SecurityContextHolder.getContext().getAuthentication();
+        log.warn("Seguridad: acceso denegado {} {} usuario={}", request.getMethod(),
+                LogSeguro.limpiar(request.getRequestURI()),
+                autenticacion != null ? LogSeguro.limpiar(autenticacion.getName()) : "-");
         escritor.escribir(response, HttpStatus.FORBIDDEN, ACCESO_DENEGADO,
                 "No tienes permiso para realizar esta operación", request.getRequestURI());
     }

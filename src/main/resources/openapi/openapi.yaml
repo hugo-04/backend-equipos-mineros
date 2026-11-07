@@ -663,6 +663,12 @@ components:
         path:
           type: string
           example: /equipos/99
+        traceId:
+          type: string
+          description: >-
+            Id de correlación de la petición (también viaja en la cabecera X-Trace-Id). Sirve para rastrear
+            el error en los logs del servidor.
+          example: 7f3c1d2e-9a4b-4f6e-8c11-2b7d5e9a0c34
         details:
           type: array
           description: Detalle por campo en errores de validación

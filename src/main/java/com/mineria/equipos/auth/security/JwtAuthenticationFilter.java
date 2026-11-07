@@ -1,6 +1,7 @@
 package com.mineria.equipos.auth.security;
 
 import com.mineria.equipos.shared.exception.TokenJwtException;
+import com.mineria.equipos.shared.trace.LogSeguro;
 
 import java.io.IOException;
 
@@ -41,11 +42,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 SecurityContextHolder.getContext()
                         .setAuthentication(jwtService.autenticar(header.substring(PREFIJO_BEARER.length()).trim()));
             } catch (TokenJwtException e) {
-                log.debug("Token rechazado en {}: {}", request.getRequestURI(), e.getCodigo());
+                log.debug("Token rechazado en {}: {}", LogSeguro.limpiar(request.getRequestURI()), e.getCodigo());
                 request.setAttribute(ATRIBUTO_ERROR_TOKEN, e.getCodigo());
             } catch (RuntimeException e) {
                 // Falla cerrado: si algo inesperado impide validar el token, la petición queda SIN autenticar (401)
-                log.error("Error inesperado al validar el token en {}", request.getRequestURI(), e);
+                log.error("Error inesperado al validar el token en {}", LogSeguro.limpiar(request.getRequestURI()), e);
                 request.setAttribute(ATRIBUTO_ERROR_TOKEN, TokenJwtException.TOKEN_INVALIDO);
             }
         }

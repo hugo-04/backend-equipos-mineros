@@ -41,6 +41,11 @@ spring:
       allow-coercion-of-scalars: false
     default-property-inclusion: non_null
 
+logging:
+  pattern:
+    # El traceId identifica la petición: sale en todos los logs y en el ErrorResponse que ve el cliente
+    level: "%5p [traceId=%X{traceId:-}]"
+
 server:
   port: ${PORT:8080}
   # Detrás del proxy del hosting: toma la IP y el esquema reales de X-Forwarded-* (Tomcat solo confía en proxies internos)

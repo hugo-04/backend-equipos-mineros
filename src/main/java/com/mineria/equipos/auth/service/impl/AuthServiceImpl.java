@@ -17,6 +17,7 @@ import com.mineria.equipos.auth.service.AuthService;
 import com.mineria.equipos.generated.model.LoginRequest;
 import com.mineria.equipos.generated.model.LoginResponse;
 import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
+import com.mineria.equipos.shared.trace.LogSeguro;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -50,13 +51,13 @@ public class AuthServiceImpl implements AuthService {
                 throw new CredencialesInvalidasException();
             }
 
-            log.info("Login correcto: usuario={}", usuario.getUsername());
+            log.info("Login correcto: usuario={}", LogSeguro.limpiar(usuario.getUsername()));
             return mapper.toLoginResponse(jwtService.generarToken(usuario), TIPO_TOKEN, jwtService.getExpiracionSegundos());
         } catch (CredencialesInvalidasException e) {
-            log.warn("Login rechazado para el usuario {}", request.getUsername());
+            log.warn("Login rechazado para el usuario {}", LogSeguro.limpiar(request.getUsername()));
             throw e;
         } catch (RuntimeException e) {
-            log.error("Fallo inesperado durante el login del usuario {}", request.getUsername(), e);
+            log.error("Fallo inesperado durante el login del usuario {}", LogSeguro.limpiar(request.getUsername()), e);
             throw e;
         }
     }

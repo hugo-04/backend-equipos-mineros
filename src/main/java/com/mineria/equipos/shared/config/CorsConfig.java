@@ -28,8 +28,8 @@ public class CorsConfig {
         CorsConfiguration configuracion = new CorsConfiguration();
         configuracion.setAllowedOrigins(properties.cors().allowedOrigins());
         configuracion.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuracion.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
-        configuracion.setExposedHeaders(List.of("Location"));
+        configuracion.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept", "X-Trace-Id"));
+        configuracion.setExposedHeaders(List.of("Location", "X-Trace-Id"));
         configuracion.setMaxAge(MAX_AGE_SEGUNDOS);
 
         UrlBasedCorsConfigurationSource fuente = new UrlBasedCorsConfigurationSource();

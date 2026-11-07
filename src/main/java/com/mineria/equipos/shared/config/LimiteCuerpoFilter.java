@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.mineria.equipos.shared.exception.ErrorResponseWriter;
+import com.mineria.equipos.shared.trace.LogSeguro;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -42,7 +43,7 @@ public class LimiteCuerpoFilter extends OncePerRequestFilter {
         boolean sinLongitud = declarado < 0 && request.getHeader("Transfer-Encoding") != null;
         if (declarado > maxBytes || sinLongitud) {
             log.warn("Cuerpo rechazado en {} {}: content-length={}, máximo={}", request.getMethod(),
-                    request.getRequestURI(), declarado, maxBytes);
+                    LogSeguro.limpiar(request.getRequestURI()), declarado, maxBytes);
             escritor.escribir(response, HttpStatus.PAYLOAD_TOO_LARGE, CODIGO,
                     "El cuerpo de la petición supera el tamaño máximo permitido (" + maxBytes + " bytes)",
                     request.getRequestURI());
