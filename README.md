@@ -1,6 +1,6 @@
 # Registro de equipos mineros
 
-Backend (Java 21 + Spring Boot 3.5) para registrar equipos mineros, saber si **requieren mantenimiento**
+Backend (Java 21 + Spring Boot 4.1) para registrar equipos mineros, saber si **requieren mantenimiento**
 y llevar el historial de mantenimientos. El contrato de la API vive en
 [`src/main/resources/openapi/openapi.yaml`](src/main/resources/openapi/openapi.yaml) y es la fuente de verdad:
 de ahí se generan las interfaces y los DTOs.
@@ -29,7 +29,7 @@ de ahí se generan las interfaces y los DTOs.
   eliminar un equipo borra su historial.
 - Autenticación con JWT, errores con un formato único (`ErrorResponse`) y CORS configurable.
 
-**Stack:** Java 21, Maven, Spring Boot 3.5.16, MySQL 8 + Flyway, Spring Data JPA, OpenAPI 3
+**Stack:** Java 21, Maven, Spring Boot 4.1.2, MySQL 8 + Flyway, Spring Data JPA, OpenAPI 3
 (`openapi-generator`, contract-first), MapStruct, Lombok, Spring Security + JWT (jjwt), JUnit 5 + Mockito,
 ArchUnit, JaCoCo.
 
@@ -381,7 +381,11 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
 
 ## Decisiones y supuestos
 
-- **Spring Boot 3.5.16** (última de la rama 3.x, compatible con Java 21); springdoc 2.8, MapStruct 1.6, jjwt 0.12.
+- **Spring Boot 4.1.2** (Spring Framework 7, Jackson 3, Tomcat 11, Hibernate 7, Spring Security 7); springdoc 3.2, MapStruct 1.6, jjwt 0.12.
+  Venía de 3.5.16. Lo que hubo que cambiar para subir: los *starters* de prueba (`webmvc-test`, `data-jpa-test`, `security-test`) y los paquetes de
+  `@WebMvcTest`, `@DataJpaTest` y compañía; `spring-boot-starter-flyway` en vez de `flyway-core` solo; `ObjectMapper` y las excepciones de Jackson
+  pasaron a `tools.jackson`; el `exclude` de `UserDetailsServiceAutoConfiguration` apunta al paquete nuevo; y se quitaron los *pins* de Tomcat y
+  Jackson que había puesto por CVE de la rama 3.5. `jjwt-jackson` sigue usando Jackson 2 por dentro, convive sin problema.
 - **Fechas** (`creadoEn`, `fecha` del mantenimiento) en UTC con fecha y hora (`DATETIME`); en el JSON salen en ISO-8601.
 - **`horometro_ultimo_mant` arranca en 0**, como indica el modelo. Un equipo dado de alta con un horómetro ≥ su intervalo
   aparece de inmediato como "Requiere mantenimiento".
@@ -394,8 +398,8 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
   versión volver. Si la BD cae responde `503 {"status":"DOWN"}`.
 - **Listados paginados** (a pedido del dueño, tras la revisión OWASP A06): `Page`/`Pageable` de Spring Data y una clase de respuesta
   propia; cambió la forma de la respuesta de los tres `GET` de lista. Los errores siempre traen `details` (vacío si no aplica).
-- **Revisión OWASP:** los CVE de Spring Framework 6.2.19 sin ruta de explotación en esta API se aceptan con motivo en `.trivyignore`;
-  Tomcat y Jackson sí se actualizaron. El límite de intentos de login es en memoria (por instancia): con varias réplicas habría que
+- **Revisión OWASP:** con Spring Boot 4.1.2 el escaneo de la imagen con Trivy ya no deja hallazgos HIGH/CRITICAL corregibles, así que
+  `.trivyignore` quedó sin entradas (sigue existiendo para el CI). El límite de intentos de login es en memoria (por instancia): con varias réplicas habría que
   moverlo a un almacén compartido. CodeQL y gitleaks solo se ejecutan en GitHub.
 - **Mensajes de validación en español** de forma determinista (`spring.web.locale=es`), sin depender del idioma del servidor.
 - **Código duplicado:** se valida antes de guardar y, ante dos altas simultáneas, la restricción única de la BD se traduce a
