@@ -105,6 +105,13 @@ class ArquitecturaTest {
             .because("las entidades JPA viven en la carpeta entity de su módulo");
 
     @ArchTest
+    static final ArchRule entidadesSoloGuardanDatos = noClasses()
+            .that().resideInAPackage("..entity..")
+            .should().dependOnClassesThat().resideInAnyPackage(
+                    "..shared.exception..", "..service..", "..policy..", "..mapper..", "..repository..")
+            .because("las entidades solo guardan datos: validaciones y reglas de negocio van en el service (SRP)");
+
+    @ArchTest
     static final ArchRule serviciosTienenInterfazEImplementacion = classes()
             .that().resideInAPackage("..service.impl..")
             .should().haveSimpleNameEndingWith("ServiceImpl")
