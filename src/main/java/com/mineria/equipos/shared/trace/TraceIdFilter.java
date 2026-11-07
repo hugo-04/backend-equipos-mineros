@@ -16,11 +16,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 /**
- * Le da a cada petición un id de correlación (traceId). Se pone en el MDC para que salga en TODOS los logs de esa
- * petición, se devuelve en la cabecera {@code X-Trace-Id} y lo incluyen los errores ({@code ErrorResponse.traceId}),
- * así un error que ve el usuario se puede rastrear en los logs. Va primero de todos los filtros (incluido Spring
- * Security) para que hasta los 401 lo tengan. Si el cliente (por ejemplo el frontend) manda un id propio válido se
- * reutiliza; cualquier cosa rara se descarta y se genera uno nuevo, para no meter basura en los logs.
+ * Le pone a cada petición un id (traceId). Va en el MDC, así sale en todos los logs de esa petición; vuelve
+ * en la cabecera {@code X-Trace-Id} y en el {@code ErrorResponse}, de modo que un error que ve el usuario se
+ * puede buscar en los logs. Corre antes que todos los demás filtros, incluido Spring Security, para que
+ * hasta un 401 tenga id. Si el cliente manda uno propio y tiene pinta válida lo respeto; si trae algo raro
+ * genero uno nuevo, para no llenar los logs de basura.
  */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)

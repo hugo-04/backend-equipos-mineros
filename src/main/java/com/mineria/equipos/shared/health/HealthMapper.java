@@ -5,7 +5,7 @@ import org.mapstruct.Mapping;
 
 import com.mineria.equipos.generated.model.HealthResponse;
 
-/** Arma la respuesta de /health a partir de si la BD responde y de la versión que corre. */
+/** Arma la respuesta del /health con dos datos: si la BD responde y qué versión está corriendo. */
 @Mapper(imports = HealthResponse.class)
 public interface HealthMapper {
 

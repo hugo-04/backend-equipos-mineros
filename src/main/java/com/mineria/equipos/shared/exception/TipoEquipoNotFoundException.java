@@ -1,6 +1,6 @@
 package com.mineria.equipos.shared.exception;
 
-/** Se lanza cuando el tipo de equipo indicado no existe en el catálogo. */
+/** El tipo de equipo que mandaron no está en el catálogo. */
 public class TipoEquipoNotFoundException extends DomainException {
 
     public static final String CODIGO = "TIPO_EQUIPO_NO_ENCONTRADO";

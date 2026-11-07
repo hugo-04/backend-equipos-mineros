@@ -17,9 +17,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Rechaza con 413 las peticiones cuyo cuerpo supera el máximo permitido (por defecto 16 KB, de sobra para un JSON
- * de esta API) antes de que Jackson intente leerlo. También rechaza los cuerpos sin Content-Length declarado
- * (Transfer-Encoding: chunked), porque no se puede saber su tamaño de antemano. Solo mira los métodos que llevan cuerpo.
+ * Corta con 413 las peticiones cuyo cuerpo pasa del máximo (16 KB por defecto, de sobra para los JSON de esta
+ * API) antes de que Jackson se ponga a leerlo. Si el cuerpo viene en chunked, sin Content-Length, también lo
+ * rechazo: no hay forma de saber su tamaño de antemano. Solo se fija en POST, PUT y PATCH.
  */
 @Slf4j
 @RequiredArgsConstructor

@@ -8,11 +8,10 @@ import java.lang.annotation.Target;
 import org.mapstruct.Mapping;
 
 /**
- * Anotación compuesta de MapStruct para convertir un {@code Page<Proyección>} de Spring Data en la página del
- * contrato ({@code PaginaXxxResponse}). Evita repetir en cada mapper cómo se copian los datos de paginación:
- * {@code content}, {@code size}, {@code totalElements}, {@code totalPages}, {@code first} y {@code last} se
- * copian por nombre, y el número de página de Spring (que se llama {@code number}) pasa a {@code page}.
- * Así la API nunca serializa el {@code Page} de Spring tal cual (su JSON no es estable), sino la clase del contrato.
+ * Para pasar un {@code Page} de Spring Data a la página del contrato ({@code PaginaXxxResponse}) sin repetir el
+ * mapeo en cada mapper. Casi todo se copia por nombre; lo único distinto es que el número de página de Spring
+ * se llama {@code number} y en el contrato es {@code page}. Así la API nunca serializa el {@code Page} de
+ * Spring tal cual, porque su JSON no es estable entre versiones.
  */
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)

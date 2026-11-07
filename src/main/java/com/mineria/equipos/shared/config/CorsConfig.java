@@ -11,9 +11,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import lombok.RequiredArgsConstructor;
 
 /**
- * CORS para que un frontend en otro origen pueda llamar a la API. Los orígenes salen de
- * CORS_ALLOWED_ORIGINS; métodos y headers están listados a propósito (nada de "*"),
- * incluyendo Authorization para el token.
+ * Deja que un frontend en otro dominio llame a la API. Los orígenes vienen de CORS_ALLOWED_ORIGINS.
+ * Los métodos y los headers los listo uno por uno a propósito (nada de "*"); Authorization va
+ * porque por ahí viaja el token.
  */
 @Configuration
 @RequiredArgsConstructor

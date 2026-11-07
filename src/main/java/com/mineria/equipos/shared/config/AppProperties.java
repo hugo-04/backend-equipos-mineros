@@ -15,9 +15,9 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
- * Configuración propia del servicio (prefijo "app"), leída del entorno.
- * Se valida al arrancar: si falta el secreto JWT, es muy corto o es un valor de ejemplo (igual que la clave del
- * administrador), la app no levanta en vez de quedar protegida por una clave adivinable.
+ * Lo que la app lee del entorno con el prefijo "app": versión, JWT, admin inicial y CORS.
+ * Todo se valida al arrancar. Prefiero que la app no levante a que quede protegida por un
+ * secreto de ejemplo que cualquiera podría adivinar.
  */
 @Validated
 @ConfigurationProperties(prefix = "app")
@@ -28,8 +28,8 @@ public record AppProperties(
         @Valid @NotNull Cors cors) {
 
     /**
-     * El secreto HS256 necesita al menos 32 caracteres (256 bits) y no puede ser un valor de ejemplo:
-     * si lo es, la aplicación no arranca.
+     * HS256 pide mínimo 32 caracteres (256 bits). Además se rechazan los valores de ejemplo, para que
+     * nadie despliegue con el secreto que viene en la plantilla del .env.
      */
     public record Jwt(@NotBlank @Size(min = 32) String secret, @Min(1) long expirationMinutes) {
 
@@ -40,7 +40,7 @@ public record AppProperties(
         }
     }
 
-    /** Credenciales del administrador inicial. Si vienen vacías no se crea ninguno. */
+    /** El admin que se crea en el primer arranque. Si no se configura, simplemente no se crea ninguno. */
     public record Admin(String username, String password) {
 
         private static final int LARGO_MINIMO_PASSWORD = 12;
@@ -57,8 +57,9 @@ public record AppProperties(
     }
 
     /**
-     * Orígenes permitidos por CORS: URLs completas (http o https, con host y puerto opcional), sin "/" al final y
-     * sin comodines. Un "*" o un valor mal escrito hace fallar el arranque en lugar de abrir la API a cualquiera.
+     * Orígenes que pueden llamar a la API desde un navegador. Tienen que ser URLs completas (http o https),
+     * sin "/" al final y sin comodines: si alguien pone "*" o lo escribe mal, la app no arranca en vez de
+     * quedar abierta a cualquier sitio.
      */
     public record Cors(@NotEmpty List<@Pattern(regexp = "^https?://[A-Za-z0-9.-]+(:[0-9]{1,5})?$",
             message = "CORS_ALLOWED_ORIGINS solo admite URLs http(s) completas, sin comodines ni '/' al final") String> allowedOrigins) {

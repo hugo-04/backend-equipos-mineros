@@ -1,8 +1,8 @@
 package com.mineria.equipos.shared.exception;
 
 /**
- * Se lanza cuando el usuario o la contraseña no coinciden.
- * El mensaje es genérico a propósito: no revela si lo que falló fue el usuario o la clave.
+ * Usuario o contraseña incorrectos. El mensaje es el mismo en los dos casos a propósito: así nadie puede
+ * probar nombres de usuario para ver cuáles existen.
  */
 public class CredencialesInvalidasException extends DomainException {
 

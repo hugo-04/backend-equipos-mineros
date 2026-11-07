@@ -2,13 +2,13 @@ package com.mineria.equipos.shared.trace;
 
 import org.slf4j.MDC;
 
-/** Acceso al id de correlación de la petición en curso (lo fija {@link TraceIdFilter} en el MDC de los logs). */
+/** Para leer el id de correlación de la petición en curso; quien lo pone en el MDC es {@link TraceIdFilter}. */
 public final class TraceId {
 
-    /** Clave del MDC; el patrón de logs la imprime como {@code traceId=...}. */
+    /** Clave en el MDC. El patrón de logs la imprime como {@code traceId=...}. */
     public static final String CLAVE_MDC = "traceId";
 
-    /** Cabecera HTTP por la que viaja el id (de entrada y de salida). */
+    /** Cabecera por la que viaja el id, tanto al entrar como al salir. */
     public static final String CABECERA = "X-Trace-Id";
 
     private TraceId() {

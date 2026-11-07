@@ -5,8 +5,8 @@ import org.springframework.security.core.AuthenticationException;
 import lombok.Getter;
 
 /**
- * El token JWT no se pudo aceptar. Lleva un código para distinguir por qué
- * (TOKEN_EXPIRADO o TOKEN_INVALIDO) y poder explicárselo al cliente.
+ * El token JWT no se aceptó. El código dice por qué (TOKEN_EXPIRADO o TOKEN_INVALIDO) para que el
+ * cliente sepa si le toca volver a iniciar sesión.
  */
 @Getter
 public class TokenJwtException extends AuthenticationException {

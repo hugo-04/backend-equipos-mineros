@@ -4,18 +4,17 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Detecta secretos y contraseñas "de ejemplo" o de poca variedad. Sirve para que la aplicación se niegue a
- * arrancar con los valores de plantilla (por ejemplo, copiados tal cual de un .env de ejemplo) en lugar de
- * quedar protegida por una clave que cualquiera puede adivinar.
+ * Dice si un secreto o una contraseña es de los que se copian de una plantilla o de los que todo el mundo
+ * adivina. La app lo usa para negarse a arrancar con eso.
  */
 public final class SecretosDebiles {
 
-    /** Palabras típicas de valores de ejemplo o claves previsibles. */
+    /** Palabras que delatan un valor de ejemplo o una clave previsible. */
     private static final List<String> PALABRAS_PROHIBIDAS = List.of(
             "cambia", "changeme", "change-me", "password", "contrasena", "contraseña", "ejemplo", "example",
             "default", "admin123", "123456", "qwerty", "letmein", "secret123", "xxxxxxxx");
 
-    /** Un secreto con menos caracteres distintos que esto es demasiado repetitivo (por ejemplo "aaaa…"). */
+    /** Con menos caracteres distintos que esto el secreto es demasiado repetitivo (tipo "aaaa..."). */
     private static final int MIN_CARACTERES_DISTINTOS = 6;
 
     private SecretosDebiles() {

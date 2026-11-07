@@ -14,9 +14,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * El servicio está "UP" solo si la base de datos responde; si no, "DOWN" (el controller lo traduce a 503).
- * Comprueba la conexión pidiéndole una a la base y validándola; si algo falla no lanza, devuelve DOWN,
- * para que /health responda 503 en vez de 500.
+ * Está "UP" solo si la base de datos contesta. Pido una conexión y la valido con un timeout corto; si falla
+ * no lanzo nada, devuelvo DOWN, para que el /health responda 503 y no un 500 que confunda.
  */
 @Slf4j
 @Service

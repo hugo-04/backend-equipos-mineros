@@ -14,8 +14,8 @@ import com.mineria.equipos.shared.trace.TraceId;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Fábrica del {@link ErrorResponse} del contrato. La usan tanto el GlobalExceptionHandler
- * como los handlers de seguridad (401/403), para que todos los errores tengan exactamente el mismo formato.
+ * Arma el {@link ErrorResponse} del contrato. Lo usan el GlobalExceptionHandler y los handlers de
+ * seguridad (401/403) para que todos los errores salgan con el mismo formato, y acá se le pega el traceId.
  */
 @Component
 @RequiredArgsConstructor

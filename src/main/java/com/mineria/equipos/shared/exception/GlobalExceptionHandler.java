@@ -40,10 +40,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Traduce cualquier excepción a la respuesta de error uniforme del contrato ({@link ErrorResponse}).
- * Extiende ResponseEntityExceptionHandler para cubrir también los errores del propio Spring MVC
- * (404 de rutas, 405, 415...) y que ninguno escape con otro formato. Los mensajes son
- * genéricos a propósito: nunca se filtran trazas ni detalles internos.
+ * Convierte cualquier excepción en el {@link ErrorResponse} del contrato. Extiende
+ * ResponseEntityExceptionHandler para que los errores del propio Spring MVC (ruta que no existe, método
+ * no permitido, media type...) también salgan con este formato. Los mensajes son genéricos a propósito:
+ * trazas y detalles internos van al log, nunca al cliente.
  */
 @Slf4j
 @RestControllerAdvice
@@ -61,7 +61,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     private final ErrorResponseFactory errores;
 
-    // ---------- Excepciones de negocio (una por caso, ver domain/exception) ----------
+    // ---------- Errores de negocio ----------
 
     @ExceptionHandler({EquipoNotFoundException.class, TipoEquipoNotFoundException.class})
     public ResponseEntity<ErrorResponse> handleNoEncontrado(DomainException ex, HttpServletRequest request) {
@@ -88,7 +88,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     // ---------- Validación ----------
 
-    /** Fallo de validación del body (@Valid sobre los DTOs generados). */
+    /** El body no pasó las validaciones del contrato (@Valid sobre los DTOs generados). */
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
                                                                   HttpHeaders headers, HttpStatusCode status,
@@ -102,7 +102,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return responderValidacion(detalles, request);
     }
 
-    /** Fallo de validación de parámetros (por ejemplo el id del path con @Min(1)) cuando lo detecta Spring MVC. */
+    /** Un parámetro no pasó la validación (por ejemplo el id del path con @Min(1)) y lo detectó Spring MVC. */
     @Override
     protected ResponseEntity<Object> handleHandlerMethodValidationException(HandlerMethodValidationException ex,
                                                                             HttpHeaders headers,
@@ -116,7 +116,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return responderValidacion(detalles, request);
     }
 
-    /** Fallo de validación de parámetros cuando lo detecta el proxy de @Validated de las interfaces generadas. */
+    /** Lo mismo que el de arriba, pero cuando quien lo detecta es el proxy de @Validated de las interfaces generadas. */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
                                                                   HttpServletRequest request) {
@@ -127,7 +127,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "La petición tiene datos inválidos", request, detalles);
     }
 
-    /** JSON malformado, tipos incorrectos (texto donde va un número) o propiedades que el contrato no conoce. */
+    /** JSON roto, un tipo que no cuadra (texto donde va un número) o propiedades que el contrato no conoce. */
     @Override
     protected ResponseEntity<Object> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
                                                                   HttpHeaders headers, HttpStatusCode status,
@@ -148,7 +148,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "El cuerpo de la petición no es un JSON válido", http));
     }
 
-    /** Un parámetro de la URL con tipo incorrecto, por ejemplo /equipos/abc. */
+    /** Un parámetro de la URL con el tipo equivocado, por ejemplo /equipos/abc. */
     @Override
     protected ResponseEntity<Object> handleTypeMismatch(TypeMismatchException ex, HttpHeaders headers,
                                                         HttpStatusCode status, WebRequest request) {
@@ -157,7 +157,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Un parámetro de la petición tiene un tipo incorrecto", servletRequest(request), List.of(detalle)));
     }
 
-    // ---------- Base de datos y seguridad ----------
+    // ---------- Base de datos y autenticación ----------
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex,
@@ -181,9 +181,9 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "No tienes permiso para realizar esta operación", request);
     }
 
-    // ---------- Todo lo demás ----------
+    // ---------- Lo demás ----------
 
-    /** Errores propios de Spring MVC (ruta inexistente, método no permitido...) con el formato común. */
+    /** Los errores que Spring MVC resuelve solo (ruta inexistente, método no permitido...), con nuestro formato. */
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex, Object body, HttpHeaders headers,
                                                              HttpStatusCode statusCode, WebRequest request) {
@@ -191,7 +191,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return cuerpo(responder(status, codigoGenerico(status), mensajeGenerico(status), servletRequest(request)));
     }
 
-    /** Red de seguridad: cualquier error no previsto. El detalle va al log, nunca al cliente. */
+    /** Red de seguridad para lo imprevisto. El detalle se queda en el log; al cliente solo le llega un mensaje genérico. */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleInesperado(Exception ex, HttpServletRequest request) {
         log.error("Error inesperado en {} {}", request.getMethod(), LogSeguro.limpiar(request.getRequestURI()), ex);
@@ -199,7 +199,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 "Ocurrió un error inesperado. Intenta de nuevo más tarde", request);
     }
 
-    // ---------- Utilidades ----------
+    // ---------- Auxiliares ----------
 
     private ResponseEntity<Object> responderValidacion(List<ErrorDetail> detalles, WebRequest request) {
         return cuerpo(responder(HttpStatus.BAD_REQUEST, VALIDACION_FALLIDA,
@@ -217,7 +217,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON).body(cuerpo);
     }
 
-    /** Adapta ResponseEntity&lt;ErrorResponse&gt; al tipo ResponseEntity&lt;Object&gt; que piden los métodos heredados. */
+    /** Los métodos heredados de Spring piden ResponseEntity&lt;Object&gt;, así que acá se adapta el de ErrorResponse. */
     private ResponseEntity<Object> cuerpo(ResponseEntity<ErrorResponse> respuesta) {
         return ResponseEntity.status(respuesta.getStatusCode())
                 .contentType(MediaType.APPLICATION_JSON)
@@ -228,7 +228,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ((ServletWebRequest) request).getRequest();
     }
 
-    /** De "obtenerEquipo.id" deja solo "id". */
+    /** Del path "obtenerEquipo.id" se queda solo con "id". */
     private String nombreDelParametro(ConstraintViolation<?> violacion) {
         String ruta = violacion.getPropertyPath().toString();
         return ruta.substring(ruta.lastIndexOf('.') + 1);

@@ -7,8 +7,8 @@ import org.springframework.validation.annotation.Validated;
 import jakarta.validation.constraints.Min;
 
 /**
- * Límites de protección (prefijo "app.security"). Los valores por defecto sirven para producción;
- * se pueden ajustar con variables de entorno (por ejemplo, para endurecerlos en una prueba).
+ * Los límites de protección (prefijo "app.security"). Los valores por defecto ya sirven para producción;
+ * se pueden cambiar con variables de entorno, por ejemplo para apretarlos en una prueba.
  *
  * @param loginMaxIntentos      intentos de login fallidos permitidos por IP dentro de la ventana
  * @param loginVentanaSegundos  duración de la ventana de conteo (y del bloqueo) en segundos

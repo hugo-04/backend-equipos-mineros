@@ -3,9 +3,9 @@ package com.mineria.equipos.shared.exception;
 import lombok.Getter;
 
 /**
- * Base de todas las excepciones de negocio del servicio.
- * Cada una lleva un código interno estable (por ejemplo EQUIPO_NO_ENCONTRADO) que
- * la capa web usa para armar la respuesta de error sin que el dominio sepa de HTTP.
+ * Padre de las excepciones de negocio. Cada una trae un código estable (por ejemplo EQUIPO_NO_ENCONTRADO)
+ * y el GlobalExceptionHandler lo usa para armar la respuesta HTTP, así los services no tienen que saber
+ * nada de HTTP.
  */
 @Getter
 public abstract class DomainException extends RuntimeException {

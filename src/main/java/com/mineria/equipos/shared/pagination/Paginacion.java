@@ -4,10 +4,10 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 /**
- * Arma el {@link Pageable} de Spring Data a partir de los parámetros {@code page} y {@code size} de la URL.
- * Es el único lugar donde se decide el tamaño por defecto y el máximo, así ningún listado puede devolver
- * una cantidad ilimitada de filas aunque el contrato llegara a cambiar. Usa {@code PageRequest.of(...)},
- * la forma vigente (los constructores de PageRequest están obsoletos).
+ * Convierte los parámetros {@code page} y {@code size} de la URL en el {@link Pageable} de Spring Data.
+ * Acá, y solo acá, se fija el tamaño por defecto y el máximo: así ningún listado puede devolver filas sin
+ * límite aunque el contrato cambie. La primera página es la 0, igual que en Spring. Uso
+ * {@code PageRequest.of(...)} porque los constructores de PageRequest están obsoletos.
  */
 public final class Paginacion {
 
@@ -18,7 +18,7 @@ public final class Paginacion {
     private Paginacion() {
     }
 
-    /** Valores ausentes -> los de por defecto; valores fuera de rango -> se ajustan al rango permitido. */
+    /** Si no mandan nada se usan los valores por defecto; si mandan algo fuera de rango, se ajusta al límite. */
     public static Pageable de(Integer pagina, Integer tamano) {
         int paginaSegura = pagina == null ? PAGINA_INICIAL : Math.max(PAGINA_INICIAL, pagina);
         int tamanoSeguro = tamano == null ? TAMANO_POR_DEFECTO : Math.clamp(tamano, 1, TAMANO_MAXIMO);

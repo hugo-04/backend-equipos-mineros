@@ -13,9 +13,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Escribe un {@link ErrorResponse} directamente en la respuesta HTTP. Lo usan los filtros y handlers de
- * seguridad (401, 403, 429, 413), que actúan antes de llegar a los controllers y por eso el
- * GlobalExceptionHandler no los ve: así el cliente recibe siempre el mismo formato de error.
+ * Escribe el {@link ErrorResponse} directo en la respuesta HTTP. Los filtros de seguridad (401, 403, 429
+ * y 413) cortan la petición antes de llegar a un controller, y entonces el GlobalExceptionHandler ni se
+ * entera; por eso necesitan esto para devolver el mismo formato de error que el resto.
  */
 @Component
 @RequiredArgsConstructor

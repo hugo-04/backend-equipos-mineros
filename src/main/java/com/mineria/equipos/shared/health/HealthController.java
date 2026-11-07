@@ -10,8 +10,8 @@ import com.mineria.equipos.generated.model.HealthResponse;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Endpoint /health. Responde 200 si la base de datos contesta y 503 si no.
- * Incluye la versión (tag de la imagen) para que el despliegue pueda comprobar qué está corriendo.
+ * El /health. Da 200 si la base de datos contesta y 503 si no. deploy.sh lo consulta después de cada despliegue
+ * y por eso devuelve también la versión (el tag de la imagen): así confirma cuál quedó corriendo.
  */
 @RestController
 @RequiredArgsConstructor
