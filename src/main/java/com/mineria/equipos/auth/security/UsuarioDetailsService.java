@@ -10,7 +10,7 @@ import com.mineria.equipos.auth.repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
-/** Carga un usuario de la base de datos para Spring Security: su hash BCrypt y su rol (como ROLE_ADMIN, etc.). */
+/** Le da a Spring Security el usuario de la base: su hash BCrypt y su rol (ROLE_ADMIN, ROLE_OPERADOR). */
 @Service
 @RequiredArgsConstructor
 public class UsuarioDetailsService implements UserDetailsService {

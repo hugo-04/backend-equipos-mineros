@@ -3,7 +3,7 @@ package com.mineria.equipos.auth.service;
 import com.mineria.equipos.generated.model.LoginRequest;
 import com.mineria.equipos.generated.model.LoginResponse;
 
-/** Servicio de autenticación: inicia sesión y garantiza que exista el administrador inicial. */
+/** Iniciar sesión y asegurarse de que exista el administrador inicial. */
 public interface AuthService {
 
     /** @throws com.mineria.equipos.shared.exception.CredencialesInvalidasException si usuario o clave no coinciden */

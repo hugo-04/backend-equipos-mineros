@@ -21,9 +21,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Respuestas 401 y 403 de la cadena de seguridad. Los errores de seguridad ocurren antes de llegar a
- * los controllers, así que el GlobalExceptionHandler no los ve; estos handlers escriben el mismo
- * {@code ErrorResponse} del contrato para que el cliente siempre reciba un solo formato.
+ * Responde los 401 y 403 de la cadena de seguridad. Esos errores pasan antes de llegar a un controller,
+ * así que el GlobalExceptionHandler no los ve; estos handlers escriben el mismo {@code ErrorResponse} para
+ * que el cliente reciba siempre un solo formato.
  */
 @Slf4j
 @Component
@@ -35,7 +35,7 @@ public class SecurityErrorHandlers implements AuthenticationEntryPoint, AccessDe
 
     private final ErrorResponseWriter escritor;
 
-    /** 401: falta el token, es inválido o expiró. */
+    /** 401: no mandaron el token, es inválido o ya venció. */
     @Override
     public void commence(HttpServletRequest request, HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
@@ -51,7 +51,7 @@ public class SecurityErrorHandlers implements AuthenticationEntryPoint, AccessDe
         escritor.escribir(response, HttpStatus.UNAUTHORIZED, codigo, mensaje, request.getRequestURI());
     }
 
-    /** 403: el usuario está autenticado pero su rol no alcanza. */
+    /** 403: el usuario sí inició sesión, pero su rol no le alcanza para esto. */
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response,
                        AccessDeniedException accessDeniedException) throws IOException {

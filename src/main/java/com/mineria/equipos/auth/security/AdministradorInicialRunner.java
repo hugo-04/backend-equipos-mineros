@@ -11,8 +11,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Al arrancar crea el administrador inicial con ADMIN_USER y ADMIN_PASSWORD del entorno.
- * Si no están definidos no falla: avisa en el log (sin ese usuario nadie podrá iniciar sesión).
+ * Al arrancar crea el administrador inicial con el ADMIN_USER y el ADMIN_PASSWORD del entorno. Si no están
+ * definidos no tumba la app, pero deja un aviso en el log: sin ese usuario nadie va a poder iniciar sesión.
  */
 @Slf4j
 @Component

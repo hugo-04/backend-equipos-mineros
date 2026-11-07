@@ -18,10 +18,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Frena la fuerza bruta contra {@code POST /auth/login}: si una IP acumuló demasiados logins fallidos
- * responde 429 con {@code Retry-After} sin llegar siquiera a revisar la contraseña. Cuenta como fallo una
- * respuesta 401 del login; un login correcto reinicia el conteo. La IP real llega correcta porque
- * Tomcat resuelve {@code X-Forwarded-For} solo desde proxies de confianza (server.forward-headers-strategy=native).
+ * Frena la fuerza bruta sobre {@code POST /auth/login}. Si una IP ya acumuló demasiados logins fallidos
+ * responde 429 con {@code Retry-After}, sin ni siquiera revisar la contraseña. Un fallo es una respuesta
+ * 401 del login; un login correcto reinicia la cuenta. La IP que se mira es la real porque Tomcat
+ * resuelve {@code X-Forwarded-For} solo cuando viene de un proxy de confianza
+ * (server.forward-headers-strategy=native).
  */
 @Slf4j
 @RequiredArgsConstructor

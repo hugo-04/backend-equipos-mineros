@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import com.mineria.equipos.auth.entity.Usuario;
 
-/** Repositorio Spring Data de usuarios. */
+/** Acceso a la tabla usuario. */
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByUsername(String username);

@@ -26,16 +26,15 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
 /**
- * Emite y valida los tokens JWT (firmados con HS256): genera el token de un usuario autenticado y sabe
- * leer un token entrante y convertirlo en la autenticación de Spring Security.
- * El secreto y la duración vienen del entorno.
+ * Crea los tokens JWT (firmados con HS256) cuando alguien inicia sesión y los valida cuando llegan de
+ * vuelta, convirtiéndolos en la autenticación de Spring Security. El secreto y la duración salen del entorno.
  */
 @Component
 public class JwtService {
 
     private static final String CLAIM_ROL = "rol";
     private static final String PREFIJO_ROL = "ROLE_";
-    /** Quién emite el token y para quién es: un token de otro sistema (o sin estos datos) se rechaza. */
+    /** Quién emite el token y para quién es. Un token de otro sistema, o sin estos datos, se rechaza. */
     static final String EMISOR = "equipos-mineros-backend";
     static final String AUDIENCIA = "equipos-mineros-api";
 
@@ -49,7 +48,7 @@ public class JwtService {
         this.clock = clock;
     }
 
-    /** Genera el token del usuario ya autenticado; el rol viaja como claim para no consultar la BD en cada petición. */
+    /** Genera el token del usuario ya autenticado. El rol viaja dentro del token para no ir a la BD en cada petición. */
     public String generarToken(UserDetails usuario) {
         Instant ahora = clock.instant();
         return Jwts.builder()
@@ -68,7 +67,7 @@ public class JwtService {
     }
 
     /**
-     * Valida firma, expiración, emisor y audiencia del token y arma la autenticación (usuario + rol).
+     * Revisa firma, expiración, emisor y audiencia, y con eso arma la autenticación (usuario y rol).
      *
      * @throws TokenJwtException si el token está vencido, mal formado o la firma no coincide
      */
@@ -88,8 +87,8 @@ public class JwtService {
         } catch (ExpiredJwtException e) {
             throw new TokenJwtException(TokenJwtException.TOKEN_EXPIRADO, "El token expiró", e);
         } catch (RuntimeException e) {
-            // Falla cerrado: mal formado, sin firma (alg none), firma o emisor/audiencia incorrectos, vacío, rol inexistente
-            // o cualquier otro fallo inesperado al leerlo => el token simplemente no sirve
+            // Falla cerrado: token mal formado, sin firma (alg none), con firma, emisor o audiencia que no son,
+            // vacío, con un rol que no existe, o cualquier otro fallo al leerlo. En todos esos casos el token no sirve.
             throw new TokenJwtException(TokenJwtException.TOKEN_INVALIDO, "El token no es válido", e);
         }
     }

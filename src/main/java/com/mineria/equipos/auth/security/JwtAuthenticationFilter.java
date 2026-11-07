@@ -17,16 +17,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Lee el header "Authorization: Bearer ..." y, si el token es válido, deja al usuario autenticado
- * para esa petición. Si el token es inválido o expiró NO responde aquí: guarda el motivo y sigue,
- * y es el entry point quien contesta el 401 con el formato común (así los endpoints públicos
- * siguen funcionando aunque el cliente mande un token viejo).
+ * Lee el header "Authorization: Bearer ..." y, si el token sirve, deja al usuario autenticado en esa
+ * petición. Si el token está vencido o es inválido no responde acá: anota el motivo y deja seguir. El 401
+ * lo contesta el entry point, con el formato de siempre. Así los endpoints públicos siguen funcionando
+ * aunque el cliente mande un token viejo.
  */
 @Slf4j
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    /** Atributo de la petición donde se deja el código del fallo del token (para el 401). */
+    /** Donde se anota, en la petición, por qué falló el token, para que el 401 lo explique. */
     public static final String ATRIBUTO_ERROR_TOKEN = "equipos.error.token";
 
     private static final String PREFIJO_BEARER = "Bearer ";
@@ -45,7 +45,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.debug("Token rechazado en {}: {}", LogSeguro.limpiar(request.getRequestURI()), e.getCodigo());
                 request.setAttribute(ATRIBUTO_ERROR_TOKEN, e.getCodigo());
             } catch (RuntimeException e) {
-                // Falla cerrado: si algo inesperado impide validar el token, la petición queda SIN autenticar (401)
+                // Falla cerrado: si pasa algo raro al validar el token, la petición queda sin autenticar y sale 401
                 log.error("Error inesperado al validar el token en {}", LogSeguro.limpiar(request.getRequestURI()), e);
                 request.setAttribute(ATRIBUTO_ERROR_TOKEN, TokenJwtException.TOKEN_INVALIDO);
             }

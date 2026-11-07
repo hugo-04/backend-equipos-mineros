@@ -13,15 +13,15 @@ import org.springframework.stereotype.Component;
 import com.mineria.equipos.shared.config.SecurityProperties;
 
 /**
- * Cuenta los logins fallidos por cliente (IP) dentro de una ventana de tiempo para frenar los ataques de
- * fuerza bruta. Cuando se alcanza el máximo, el cliente queda bloqueado hasta que su fallo más viejo salga de la
- * ventana. Un login correcto borra el conteo. Vive en memoria: con varias instancias cada una cuenta por su lado
- * (es una defensa de mejor esfuerzo, y el backend de este proyecto corre en una sola instancia).
+ * Lleva la cuenta de logins fallidos por IP dentro de una ventana de tiempo. Al llegar al máximo, esa IP
+ * queda bloqueada hasta que su fallo más viejo salga de la ventana, y un login correcto borra la cuenta.
+ * Todo vive en memoria: si hubiera varias instancias, cada una contaría por su lado. Es una defensa de
+ * mejor esfuerzo, y este backend corre en una sola instancia.
  */
 @Component
 public class LoginRateLimiter {
 
-    /** A partir de aquí se limpian las entradas vencidas, para que el mapa no crezca sin límite. */
+    /** Pasado este tamaño se limpian las entradas vencidas, para que el mapa no crezca sin parar. */
     private static final int LIMITE_DE_ENTRADAS = 10_000;
 
     private final int maxIntentos;
@@ -42,7 +42,7 @@ public class LoginRateLimiter {
 
     public void registrarFallo(String cliente) {
         if (fallos.size() >= LIMITE_DE_ENTRADAS) {
-            // computeIfPresent elimina la entrada cuando ya no quedan fallos vigentes (devuelve null)
+            // Si ya no quedan fallos vigentes, sinVencidos devuelve null y computeIfPresent borra la entrada
             fallos.keySet().forEach(k -> fallos.computeIfPresent(k, (clave, actuales) -> sinVencidos(actuales)));
         }
         fallos.compute(cliente, (k, actuales) -> {
@@ -57,7 +57,7 @@ public class LoginRateLimiter {
         fallos.remove(cliente);
     }
 
-    /** Segundos que faltan para que se libere el bloqueo (mínimo 1). */
+    /** Cuántos segundos faltan para que se libere el bloqueo (como mínimo 1). */
     public long segundosParaReintentar(String cliente) {
         Deque<Instant> recientes = fallos.get(cliente);
         if (recientes == null || recientes.isEmpty()) {

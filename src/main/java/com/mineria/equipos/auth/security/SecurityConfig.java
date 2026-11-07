@@ -29,8 +29,8 @@ import com.mineria.equipos.shared.exception.ErrorResponseWriter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * Reglas de seguridad: autenticación stateless con JWT. Públicos: login, health y Swagger.
- * Todo lo demás exige token, y borrar equipos exige además el rol ADMIN.
+ * Las reglas de seguridad: sin sesión, todo con JWT. Son públicos solo el login, el health y Swagger; lo
+ * demás pide token, y para borrar equipos hace falta además el rol ADMIN.
  */
 @Configuration
 @RequiredArgsConstructor
@@ -68,11 +68,11 @@ public class SecurityConfig {
                 .headers(cabeceras -> cabeceras
                         .httpStrictTransportSecurity(hsts -> hsts
                                 .includeSubDomains(true).maxAgeInSeconds(HSTS_SEGUNDOS)
-                                // Siempre: detrás de un proxy TLS la petición interna llega por http
+                                // Se manda siempre: detrás del proxy que pone el HTTPS, la petición interna llega por http
                                 .requestMatcher(AnyRequestMatcher.INSTANCE))
                         .referrerPolicy(referrer -> referrer.policy(ReferrerPolicy.NO_REFERRER))
                         .frameOptions(FrameOptionsConfig::deny)
-                        // CSP de API pura: no carga nada y no se puede embeber. Swagger UI (solo en desarrollo) la necesita libre
+                        // CSP de API pura: no carga nada y no se puede embeber. A Swagger UI (solo en desarrollo) no se le pone porque la necesita libre
                         .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
                                 new NegatedRequestMatcher(RUTAS_SWAGGER),
                                 new StaticHeadersWriter("Content-Security-Policy", CSP_API)))
@@ -80,7 +80,7 @@ public class SecurityConfig {
                 .exceptionHandling(errores -> errores
                         .authenticationEntryPoint(securityErrorHandlers)
                         .accessDeniedHandler(securityErrorHandlers))
-                // Los filtros se crean aquí y no como @Bean: así Spring Boot no los registra dos veces
+                // Los filtros se crean acá y no como @Bean para que Spring Boot no los registre dos veces
                 .addFilterBefore(new LoginRateLimitFilter(loginRateLimiter, escritor), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(new LimiteCuerpoFilter(seguridad.cuerpoMaxBytes(), escritor), LoginRateLimitFilter.class)
                 .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);

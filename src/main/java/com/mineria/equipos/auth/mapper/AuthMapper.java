@@ -8,7 +8,7 @@ import com.mineria.equipos.auth.entity.Usuario;
 
 import com.mineria.equipos.generated.model.LoginResponse;
 
-/** Arma la respuesta del login y la entidad de un usuario nuevo. */
+/** Arma la respuesta del login y la entidad cuando se crea un usuario. */
 @Mapper
 public interface AuthMapper {
 

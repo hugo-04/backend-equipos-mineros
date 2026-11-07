@@ -12,8 +12,10 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Usuario que puede iniciar sesión (fila de la tabla usuario). Nunca guarda la contraseña en claro, solo su hash BCrypt.
- * Solo guarda datos: la lógica de login vive en {@code AuthService}. */
+/**
+ * Un usuario que puede iniciar sesión. La contraseña nunca se guarda tal cual, solo su hash BCrypt.
+ * La entidad solo tiene datos; la lógica del login está en {@code AuthService}.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

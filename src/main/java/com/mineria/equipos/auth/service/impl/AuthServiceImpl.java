@@ -23,9 +23,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Valida usuario y contraseña contra la base de datos y emite el token de sesión.
- * Si el usuario no existe o la clave no coincide responde exactamente el mismo error,
- * para no dar pistas sobre qué usuarios existen.
+ * Revisa usuario y contraseña contra la base y entrega el token. Cuando el usuario no existe y cuando la
+ * clave está mal, el error es exactamente el mismo, para no dar pistas de qué usuarios existen.
  */
 @Slf4j
 @Service
@@ -63,9 +62,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     /**
-     * Crea el administrador inicial si todavía no existe. Se ejecuta al arrancar con los datos que vienen
-     * del entorno, de modo que ninguna credencial viva en el repositorio.
-     * Es idempotente: si ya existe no lo toca (no pisa una contraseña cambiada después).
+     * Crea el administrador inicial si todavía no existe. Corre al arrancar con los datos del entorno, así
+     * ninguna credencial queda en el repositorio. Se puede ejecutar las veces que sea: si el admin ya existe
+     * no lo toca, y por eso nunca pisa una contraseña que se haya cambiado después.
      */
     @Override
     @Transactional
@@ -83,14 +82,14 @@ public class AuthServiceImpl implements AuthService {
         try {
             return userDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            // Mismo error que una clave incorrecta y, además, el mismo tiempo: se hace el mismo trabajo de BCrypt
-            // contra un hash señuelo, así medir cuánto tarda el login no revela qué usuarios existen
+            // Mismo error que con una clave incorrecta y también el mismo tiempo: se hace el mismo trabajo de
+            // BCrypt contra un hash señuelo, así nadie puede medir cuánto tarda el login para saber qué usuarios existen
             passwordEncoder.matches(password, hashSenuelo());
             throw new CredencialesInvalidasException();
         }
     }
 
-    /** Hash BCrypt de una clave aleatoria, con el mismo costo que los hashes reales. Se calcula una sola vez. */
+    /** Hash BCrypt de una clave aleatoria, con el mismo costo que los hashes reales. Se calcula una sola vez y se reutiliza. */
     private String hashSenuelo() {
         String hash = hashSenuelo;
         if (hash == null) {

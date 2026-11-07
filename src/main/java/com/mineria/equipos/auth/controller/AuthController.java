@@ -10,7 +10,7 @@ import com.mineria.equipos.generated.model.LoginResponse;
 
 import lombok.RequiredArgsConstructor;
 
-/** Endpoint de login. Solo delega en el servicio. */
+/** El endpoint de login. No tiene lógica: le pasa todo al servicio. */
 @RestController
 @RequiredArgsConstructor
 public class AuthController implements AuthApi {
