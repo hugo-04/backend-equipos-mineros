@@ -148,7 +148,7 @@ Contrato completo y navegable en Swagger UI: `http://localhost:8080/swagger-ui.h
 | `POST /equipos/{id}/mantenimientos` | JWT | Registra el mantenimiento y reinicia el ciclo |
 | `GET /equipos/{id}/mantenimientos` | JWT | Historial (paginado, el más reciente primero) |
 
-**Paginación.** Los tres listados aceptan `?page=1&size=20` (`page` desde 1; `size` de 1 a 100, 20 por defecto; fuera de rango → `400`).
+**Paginación.** Los tres listados aceptan `?page=0&size=20` (`page` desde **0**, como Spring Data; `size` de 1 a 100, 20 por defecto; fuera de rango → `400`).
 Usan `Pageable`/`Page` de Spring Data y la respuesta es una clase propia generada del contrato:
 `{page, size, totalElements, totalPages, first, last, content[]}`.
 
