@@ -15,7 +15,7 @@ import com.mineria.equipos.shared.pagination.Paginacion;
 
 import lombok.RequiredArgsConstructor;
 
-/** Endpoints de equipos (implementa la interfaz generada desde el contrato). Solo delega en el servicio. */
+/** Los endpoints de equipos. Implementa la interfaz que se genera del contrato y le pasa todo al servicio. */
 @RestController
 @RequiredArgsConstructor
 public class EquipoController implements EquiposApi {

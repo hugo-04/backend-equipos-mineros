@@ -14,10 +14,9 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Un equipo minero del registro (fila de la tabla equipo). Solo guarda datos: las reglas de negocio
- * (el horómetro no baja, el ciclo de mantenimiento) viven en {@code EquipoService}.
- * El tipo se guarda solo como {@code tipoId}: el módulo tipo es el dueño de esa entidad y este módulo
- * le pregunta a través de {@code TipoService}.
+ * Un equipo del registro. La entidad solo guarda datos; las reglas (que el horómetro no baje, el ciclo de
+ * mantenimiento) están en {@code EquipoService}. El tipo se guarda solo como {@code tipoId} porque la
+ * entidad de tipo es del módulo tipo; si hace falta algo de ahí se le pregunta a {@code TipoService}.
  */
 @Getter
 @Setter

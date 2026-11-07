@@ -12,8 +12,9 @@ import com.mineria.equipos.equipo.entity.Equipo;
 import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
 
 /**
- * Repositorio Spring Data de equipos. Las lecturas del API usan una proyección que une el tipo con
- * un JOIN por {@code tipo_id} (una sola consulta, sin N+1) sin que este módulo dependa de las clases del módulo tipo.
+ * Acceso a la tabla equipo. Las lecturas de la API no devuelven la entidad: usan una proyección que trae
+ * el tipo con un JOIN por {@code tipo_id}. Es una sola consulta (sin N+1) y este módulo no necesita las
+ * clases del módulo tipo para hacerlo.
  */
 public interface EquipoRepository extends JpaRepository<Equipo, Long> {
 
@@ -25,7 +26,7 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
             from Equipo e join TipoEquipo t on t.id = e.tipoId
             """;
 
-    /** Una página de equipos con su tipo. El COUNT se escribe a mano porque Spring no lo deriva bien de un JOIN con proyección. */
+    /** Una página de equipos con su tipo. El COUNT va escrito a mano porque Spring no lo deriva bien cuando hay JOIN y proyección. */
     @Query(value = SELECT_PROYECCION + " order by e.id",
             countQuery = "select count(e) from Equipo e join TipoEquipo t on t.id = e.tipoId")
     Page<EquipoProjection> listarProyecciones(Pageable pageable);
@@ -35,6 +36,6 @@ public interface EquipoRepository extends JpaRepository<Equipo, Long> {
 
     boolean existsByCodigo(String codigo);
 
-    /** Sirve al editar: el código puede repetirse solo si pertenece al propio equipo. */
+    /** Para editar: el código puede "repetirse" únicamente si es el del propio equipo. */
     boolean existsByCodigoAndIdNot(String codigo, Long id);
 }

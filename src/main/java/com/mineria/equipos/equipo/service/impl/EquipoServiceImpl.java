@@ -27,17 +27,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Casos de uso de equipos. Aquí viven todas las reglas de negocio del equipo (el horómetro no puede ser
- * negativo ni bajar, el ciclo de mantenimiento arranca en 0 y se reinicia al registrar un mantenimiento);
- * la entidad solo guarda datos y la regla "requiere mantenimiento" vive en la política.
- * Para saber si un tipo existe le pregunta a {@link TipoService}, nunca al repositorio del módulo tipo.
+ * Acá están las reglas de negocio del equipo: el horómetro no puede ser negativo ni bajar, el ciclo de
+ * mantenimiento arranca en 0 y se reinicia al registrar un mantenimiento, y el código no se repite. La
+ * entidad solo guarda datos, y la regla de "requiere mantenimiento" está en la política. Para saber si un
+ * tipo existe le pregunta a {@link TipoService}, nunca al repositorio del módulo tipo.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EquipoServiceImpl implements EquipoService {
 
-    /** Nombre de la restricción única del código en la migración V2. */
+    /** Así se llama la restricción única del código en la migración V2; con eso reconocemos ese error de la base. */
     private static final String RESTRICCION_CODIGO_UNICO = "uk_equipo_codigo";
 
     private final EquipoRepository repository;
@@ -66,7 +66,7 @@ public class EquipoServiceImpl implements EquipoService {
                 throw new CodigoDuplicadoException(request.getCodigo());
             }
 
-            // Alta: el horómetro no puede ser negativo y el ciclo de mantenimiento arranca en 0
+            // Un equipo nuevo no puede nacer con horómetro negativo, y su ciclo de mantenimiento arranca en 0
             validarHorometroNoNegativo(request.getHorometro());
             Equipo nuevo = mapper.toEntity(request);
             nuevo.setHorometroUltimoMant(BigDecimal.ZERO);
@@ -75,7 +75,7 @@ public class EquipoServiceImpl implements EquipoService {
             log.info("Equipo creado: id={}, codigo={}", guardado.getId(), guardado.getCodigo());
             return consultar(guardado.getId());
         } catch (DomainException e) {
-            // Error de negocio esperado: se avisa y se deja que el handler global lo traduzca a HTTP
+            // Es un error de negocio esperado: se deja un aviso en el log y el handler global lo convierte en la respuesta HTTP
             log.warn("No se pudo crear el equipo {}: {}", request.getCodigo(), e.getMessage());
             throw e;
         } catch (RuntimeException e) {
@@ -91,7 +91,8 @@ public class EquipoServiceImpl implements EquipoService {
             Equipo equipo = repository.findById(id).orElseThrow(() -> new EquipoNotFoundException(id));
             tipoService.verificarExiste(request.getTipoId());
 
-            // Regla de negocio: el horómetro no puede bajar (se valida antes de tocar la entidad)
+            // El horómetro no se deja bajar: si alguien lo corrige a la baja, el ciclo de mantenimiento se rompería.
+            // Se valida antes de tocar la entidad.
             validarHorometroNoBaja(equipo.getHorometro(), request.getHorometro());
 
             if (repository.existsByCodigoAndIdNot(request.getCodigo(), id)) {
@@ -111,7 +112,7 @@ public class EquipoServiceImpl implements EquipoService {
         }
     }
 
-    /** El historial de mantenimientos se borra solo por el ON DELETE CASCADE de la base de datos. */
+    /** No hay que borrar el historial a mano: lo hace la base con el ON DELETE CASCADE. */
     @Override
     @Transactional
     public void eliminar(Long id) {
@@ -141,7 +142,7 @@ public class EquipoServiceImpl implements EquipoService {
     @Transactional
     public BigDecimal reiniciarCiclo(Long id) {
         Equipo equipo = repository.findById(id).orElseThrow(() -> new EquipoNotFoundException(id));
-        // El horómetro actual pasa a ser el del último mantenimiento: el ciclo vuelve a empezar
+        // El horómetro de ahora queda como el del último mantenimiento, y de acá se vuelven a contar las horas
         BigDecimal horometro = equipo.getHorometro();
         equipo.setHorometroUltimoMant(horometro);
         repository.saveAndFlush(equipo);
@@ -171,10 +172,10 @@ public class EquipoServiceImpl implements EquipoService {
 
     private Equipo guardar(Equipo equipo) {
         try {
-            // saveAndFlush fuerza el INSERT/UPDATE ya, para detectar aquí un código repetido
+            // saveAndFlush manda el INSERT/UPDATE en el acto; así un código repetido falla acá y no más tarde
             return repository.saveAndFlush(equipo);
         } catch (DataIntegrityViolationException e) {
-            // Dos altas simultáneas con el mismo código pasan el chequeo previo; la BD las frena
+            // Si dos altas con el mismo código llegan a la vez, las dos pasan el chequeo previo; la que frena es la base
             if (violaCodigoUnico(e)) {
                 throw new CodigoDuplicadoException(equipo.getCodigo());
             }

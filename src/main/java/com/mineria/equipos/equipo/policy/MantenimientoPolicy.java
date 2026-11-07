@@ -3,10 +3,8 @@ package com.mineria.equipos.equipo.policy;
 import java.math.BigDecimal;
 
 /**
- * Regla de negocio que decide si un equipo necesita mantenimiento.
- * Es una Strategy: hoy hay una sola implementación (por intervalo de horas), pero
- * si mañana se mide por calendario o por condición del equipo, se cambia solo la
- * implementación sin tocar los servicios.
+ * Decide si un equipo necesita mantenimiento. Está como interfaz para que la regla se pueda cambiar
+ * (por calendario, por ejemplo) sin tocar los services. Hoy hay una sola implementación, la de horas.
  */
 public interface MantenimientoPolicy {
 

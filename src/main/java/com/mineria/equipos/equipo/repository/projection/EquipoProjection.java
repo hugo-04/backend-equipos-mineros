@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 /**
- * Proyección de solo lectura de un equipo con los datos de su tipo ya unidos (JOIN).
- * Trae solo las columnas necesarias y evita cargar entidades (y el N+1 del tipo).
+ * Un equipo ya con los datos de su tipo unidos por el JOIN. Se usa para leer: trae solo las columnas
+ * necesarias y evita cargar entidades (y una consulta extra por cada tipo).
  */
 public interface EquipoProjection {
 
