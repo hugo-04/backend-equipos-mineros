@@ -22,6 +22,10 @@ import com.mineria.equipos.testsupport.PersistenciaTest;
 
 import jakarta.persistence.EntityManager;
 
+/**
+ * Las consultas de equipos contra la base real (H2 en modo MySQL con las migraciones): guardar, actualizar, el JOIN
+ * con el tipo, el código único y la paginación.
+ */
 @PersistenciaTest
 class EquipoRepositoryTest {
 

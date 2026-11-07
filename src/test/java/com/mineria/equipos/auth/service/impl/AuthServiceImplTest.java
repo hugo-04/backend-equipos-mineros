@@ -43,6 +43,10 @@ import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.Tokens;
 
+/**
+ * El login (con la clave comparada contra su hash BCrypt y el hash señuelo cuando el usuario no existe) y la
+ * creación del administrador inicial. La codificación y el JWT son los reales; el repositorio va simulado.
+ */
 @ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class AuthServiceImplTest {
 
@@ -69,7 +73,7 @@ class AuthServiceImplTest {
                 User.withUsername(username).password(hash).roles("ADMIN").build());
     }
 
-    // ---------- login ----------
+    // login
 
     @Test
     @DisplayName("login: emite un token Bearer cuando usuario y contraseña coinciden")
@@ -166,7 +170,7 @@ class AuthServiceImplTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ---------- administrador inicial ----------
+    // administrador inicial
 
     @Test
     @DisplayName("asegurarAdministrador: crea el administrador con la clave como hash BCrypt, nunca en claro")

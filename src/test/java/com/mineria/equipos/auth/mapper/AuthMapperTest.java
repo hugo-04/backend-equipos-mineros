@@ -9,6 +9,9 @@ import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.auth.entity.Usuario;
 import com.mineria.equipos.generated.model.LoginResponse;
 
+/**
+ * Que el mapper arme bien la respuesta del login (token, tipo y duración) y la entidad del usuario.
+ */
 class AuthMapperTest {
 
     private final AuthMapper mapper = new AuthMapperImpl();

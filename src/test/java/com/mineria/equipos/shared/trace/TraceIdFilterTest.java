@@ -13,6 +13,10 @@ import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 
+/**
+ * El id de correlación: se reutiliza el que mande el cliente si tiene pinta válida y, si no, se genera uno.
+ * Sale en la cabecera de respuesta, vive en el MDC durante la petición y se limpia al terminar.
+ */
 class TraceIdFilterTest {
 
     private final TraceIdFilter filtro = new TraceIdFilter();

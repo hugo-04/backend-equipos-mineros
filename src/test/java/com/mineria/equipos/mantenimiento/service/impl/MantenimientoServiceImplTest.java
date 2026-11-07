@@ -35,6 +35,9 @@ import com.mineria.equipos.mantenimiento.repository.MantenimientoRepository;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.testsupport.Datos;
 
+/**
+ * Registrar un mantenimiento (que reinicia el ciclo del equipo) y listar el historial. Si el equipo no existe, da 404.
+ */
 @ExtendWith(MockitoExtension.class)
 class MantenimientoServiceImplTest {
 
@@ -57,7 +60,7 @@ class MantenimientoServiceImplTest {
         return m;
     }
 
-    // ---------- registrar ----------
+    // registrar
 
     @Test
     @DisplayName("registrar: guarda el historial con el horómetro actual y reinicia el ciclo del equipo")
@@ -125,7 +128,7 @@ class MantenimientoServiceImplTest {
                 .hasMessageContaining("21");
     }
 
-    // ---------- listarPorEquipo ----------
+    // listarPorEquipo
 
     @Test
     @DisplayName("listarPorEquipo: devuelve el historial de un equipo que existe")

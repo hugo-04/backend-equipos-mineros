@@ -27,6 +27,9 @@ import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.Tokens;
 import com.mineria.equipos.tipo.service.TipoService;
 
+/**
+ * El endpoint del catálogo de tipos por HTTP, con el servicio simulado.
+ */
 @ControllerTest(TipoController.class)
 class TipoControllerTest {
 

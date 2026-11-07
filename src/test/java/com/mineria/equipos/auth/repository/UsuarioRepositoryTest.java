@@ -15,6 +15,9 @@ import com.mineria.equipos.auth.entity.Usuario;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.PersistenciaTest;
 
+/**
+ * La búsqueda de usuarios por username contra la base real (H2 con las migraciones de Flyway) y que el username sea único.
+ */
 @PersistenciaTest
 class UsuarioRepositoryTest {
 

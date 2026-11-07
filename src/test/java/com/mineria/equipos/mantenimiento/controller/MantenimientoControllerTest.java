@@ -33,6 +33,9 @@ import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.Tokens;
 
+/**
+ * Los endpoints del historial de mantenimientos por HTTP, con el servicio simulado.
+ */
 @ControllerTest(MantenimientoController.class)
 class MantenimientoControllerTest {
 

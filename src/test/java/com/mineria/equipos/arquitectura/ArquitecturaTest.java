@@ -27,7 +27,7 @@ class ArquitecturaTest {
     private static final String BASE = "com.mineria.equipos.";
     private static final List<String> MODULOS = List.of("equipo", "tipo", "mantenimiento", "auth");
 
-    // ---------- Reglas entre módulos ----------
+    // Reglas entre módulos
 
     /**
      * Un módulo solo puede usar de otro la interfaz de su service. Nunca su controller, la implementación
@@ -71,7 +71,7 @@ class ArquitecturaTest {
                     BASE + "equipo..", BASE + "tipo..", BASE + "mantenimiento..", BASE + "auth..")
             .because("shared es común a todos y no conoce a ningún módulo");
 
-    // ---------- Reglas de capas dentro de un módulo ----------
+    // Reglas de capas dentro de un módulo
 
     @ArchTest
     static final ArchRule controllersNoAccedenAPersistenciaNiLogica = noClasses()
@@ -130,7 +130,7 @@ class ArquitecturaTest {
             .should().dependOnClassesThat().resideInAnyPackage("..service..", "..controller..")
             .because("las capas de abajo no conocen a las de arriba");
 
-    // ---------- Excepciones ----------
+    // Excepciones
 
     @ArchTest
     static final ArchRule excepcionesSoloEnSharedException = classes()

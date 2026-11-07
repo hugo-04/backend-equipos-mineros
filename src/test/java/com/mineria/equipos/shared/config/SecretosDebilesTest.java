@@ -8,6 +8,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+/**
+ * Qué secretos y contraseñas se consideran de ejemplo o demasiado simples.
+ */
 class SecretosDebilesTest {
 
     @ParameterizedTest(name = "[{index}] \"{0}\" es débil")

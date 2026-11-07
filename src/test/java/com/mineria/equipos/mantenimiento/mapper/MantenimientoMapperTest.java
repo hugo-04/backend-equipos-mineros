@@ -12,6 +12,9 @@ import com.mineria.equipos.generated.model.MantenimientoResponse;
 import com.mineria.equipos.mantenimiento.entity.Mantenimiento;
 import com.mineria.equipos.testsupport.Datos;
 
+/**
+ * Que el mapper arme bien la respuesta del historial y la entidad del registro nuevo.
+ */
 class MantenimientoMapperTest {
 
     private final MantenimientoMapper mapper = new MantenimientoMapperImpl();

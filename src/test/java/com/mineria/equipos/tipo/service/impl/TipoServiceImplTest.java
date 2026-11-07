@@ -23,6 +23,9 @@ import com.mineria.equipos.tipo.mapper.TipoMapperImpl;
 import com.mineria.equipos.tipo.repository.TipoRepository;
 import com.mineria.equipos.tipo.repository.projection.TipoProjection;
 
+/**
+ * Listar el catálogo y comprobar que un tipo exista.
+ */
 @ExtendWith(MockitoExtension.class)
 class TipoServiceImplTest {
 

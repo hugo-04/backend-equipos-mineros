@@ -20,6 +20,9 @@ import com.mineria.equipos.shared.config.AppProperties;
 import com.mineria.equipos.shared.exception.TokenJwtException;
 import com.mineria.equipos.testsupport.Tokens;
 
+/**
+ * Emisión y validación del JWT: claims, expiración, firma, emisor, audiencia y tokens manipulados.
+ */
 class JwtServiceTest {
 
     private static final Instant INICIO = Instant.parse("2026-06-15T12:00:00Z");

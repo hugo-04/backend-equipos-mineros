@@ -22,6 +22,10 @@ import com.mineria.equipos.generated.model.LoginResponse;
 import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
 import com.mineria.equipos.testsupport.ControllerTest;
 
+/**
+ * El login por HTTP: lo que responde el controller cuando el servicio acepta o rechaza las credenciales,
+ * y que valide los campos vacíos antes de llegar al servicio.
+ */
 @ControllerTest(AuthController.class)
 class AuthControllerTest {
 

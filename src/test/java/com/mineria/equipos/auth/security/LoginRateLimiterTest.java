@@ -12,6 +12,10 @@ import com.mineria.equipos.shared.config.SecurityProperties;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.RelojMutable;
 
+/**
+ * El conteo de logins fallidos por IP: cuándo se bloquea, cuándo se libera y que cada IP cuente por separado.
+ * Usa un reloj que se mueve a mano para no esperar de verdad.
+ */
 class LoginRateLimiterTest {
 
     private RelojMutable reloj;

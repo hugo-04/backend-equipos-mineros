@@ -44,6 +44,10 @@ import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.Tokens;
 
+/**
+ * Los endpoints de equipos por HTTP: códigos de respuesta, validaciones del contrato y formato de los errores,
+ * con el servicio simulado.
+ */
 @ControllerTest(EquipoController.class)
 class EquipoControllerTest {
 
@@ -68,7 +72,7 @@ class EquipoControllerTest {
         return Datos.equipoResponse(id, "CAM-00" + id, requiere);
     }
 
-    // ---------- GET ----------
+    // GET
 
     @Test
     @DisplayName("GET /equipos: 200 con la lista y el estado de mantenimiento")
@@ -206,7 +210,7 @@ class EquipoControllerTest {
                 .andExpect(jsonPath("$.path").value("/equipos"));
     }
 
-    // ---------- POST ----------
+    // POST
 
     @Test
     @DisplayName("POST /equipos: 201, Location y el body correcto al servicio")
@@ -347,7 +351,7 @@ class EquipoControllerTest {
                 .andExpect(jsonPath("$.code").value("TIPO_EQUIPO_NO_ENCONTRADO"));
     }
 
-    // ---------- PUT ----------
+    // PUT
 
     @Test
     @DisplayName("PUT /equipos/{id}: 200 y el servicio recibe el id del path y el body")
@@ -391,7 +395,7 @@ class EquipoControllerTest {
                 .andExpect(status().isNotFound());
     }
 
-    // ---------- DELETE ----------
+    // DELETE
 
     @Test
     @DisplayName("DELETE /equipos/{id}: 204 para un ADMIN")

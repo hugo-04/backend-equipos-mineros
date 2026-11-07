@@ -43,6 +43,10 @@ import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.tipo.service.TipoService;
 
+/**
+ * Las reglas de negocio del equipo: horómetro que no baja, código único, ciclo de mantenimiento en 0 y los errores
+ * esperados. El repositorio va simulado; el mapper y la política son los reales.
+ */
 @ExtendWith(MockitoExtension.class)
 class EquipoServiceImplTest {
 
@@ -66,7 +70,7 @@ class EquipoServiceImplTest {
         return new EquipoRequest(codigo, tipoId, new BigDecimal(horometro));
     }
 
-    // ---------- crear ----------
+    // crear
 
     @Test
     @DisplayName("crear: guarda el equipo con el ciclo en 0 y devuelve su DTO")
@@ -216,7 +220,7 @@ class EquipoServiceImplTest {
                 .hasMessage("BD caída");
     }
 
-    // ---------- actualizar ----------
+    // actualizar
 
     @Test
     @DisplayName("actualizar: actualiza el equipo cuando el horómetro sube")
@@ -351,7 +355,7 @@ class EquipoServiceImplTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ---------- eliminar ----------
+    // eliminar
 
     @Test
     @DisplayName("eliminar: borra el equipo cuando existe")
@@ -389,7 +393,7 @@ class EquipoServiceImplTest {
         assertThatThrownBy(() -> service.eliminar(4L)).isInstanceOf(IllegalStateException.class);
     }
 
-    // ---------- consultas (el estado de mantenimiento se calcula al consultar) ----------
+    // consultas (el estado de mantenimiento se calcula al consultar)
 
     @Test
     @DisplayName("obtener: marca 'Requiere mantenimiento' cuando se alcanza el intervalo")
@@ -468,7 +472,7 @@ class EquipoServiceImplTest {
         assertThat(respuesta.getLast()).isTrue();
     }
 
-    // ---------- servicios para otros módulos ----------
+    // servicios para otros módulos
 
     @Test
     @DisplayName("reiniciarCiclo: deja el último mantenimiento en el horómetro actual y lo devuelve")

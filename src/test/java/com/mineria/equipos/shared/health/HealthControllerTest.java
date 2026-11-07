@@ -14,6 +14,9 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.mineria.equipos.generated.model.HealthResponse;
 import com.mineria.equipos.testsupport.ControllerTest;
 
+/**
+ * El /health: 200 con la versión cuando la base responde y 503 cuando no, sin pedir token.
+ */
 @ControllerTest(HealthController.class)
 class HealthControllerTest {
 

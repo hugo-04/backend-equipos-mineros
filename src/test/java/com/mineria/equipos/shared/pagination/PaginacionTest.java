@@ -9,6 +9,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+/**
+ * Los valores por defecto y los límites de la paginación.
+ */
 class PaginacionTest {
 
     @Test

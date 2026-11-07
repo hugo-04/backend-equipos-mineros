@@ -20,6 +20,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.mineria.equipos.generated.model.HealthResponse;
 import com.mineria.equipos.shared.config.AppProperties;
 
+/**
+ * El /health da UP solo si la conexión a la base es válida; si no se puede abrir o no es válida, da DOWN sin lanzar nada.
+ */
 @ExtendWith(MockitoExtension.class)
 class HealthServiceImplTest {
 

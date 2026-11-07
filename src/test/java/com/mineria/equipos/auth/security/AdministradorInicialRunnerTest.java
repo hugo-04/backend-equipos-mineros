@@ -17,6 +17,10 @@ import org.springframework.boot.DefaultApplicationArguments;
 import com.mineria.equipos.auth.service.AuthService;
 import com.mineria.equipos.shared.config.AppProperties;
 
+/**
+ * El administrador inicial se crea con lo que viene del entorno y, si falta el usuario o la contraseña,
+ * no se crea nada ni se cae el arranque.
+ */
 @ExtendWith(MockitoExtension.class)
 class AdministradorInicialRunnerTest {
 

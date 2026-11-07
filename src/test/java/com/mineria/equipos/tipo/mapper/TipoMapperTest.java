@@ -10,6 +10,9 @@ import org.junit.jupiter.api.Test;
 import com.mineria.equipos.generated.model.TipoEquipoResponse;
 import com.mineria.equipos.tipo.repository.projection.TipoProjection;
 
+/**
+ * Que el mapper pase la proyección del tipo al DTO.
+ */
 class TipoMapperTest {
 
     private final TipoMapper mapper = new TipoMapperImpl();

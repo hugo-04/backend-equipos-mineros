@@ -19,6 +19,9 @@ import com.mineria.equipos.mantenimiento.repository.projection.MantenimientoProj
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.PersistenciaTest;
 
+/**
+ * El historial contra la base real: del más reciente al más antiguo, sin mezclar equipos y paginado.
+ */
 @PersistenciaTest
 class MantenimientoRepositoryTest {
 

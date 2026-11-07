@@ -21,6 +21,9 @@ import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
 import com.mineria.equipos.testsupport.Datos;
 
+/**
+ * El paso entre los DTOs, la entidad y la proyección, y que "requiereMantenimiento" y "estado" se calculen con la política.
+ */
 @SpringJUnitConfig({EquipoMapperImpl.class, IntervaloMantenimientoPolicy.class})
 class EquipoMapperTest {
 

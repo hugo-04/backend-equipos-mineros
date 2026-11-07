@@ -9,6 +9,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+/**
+ * Que cada excepción de negocio lleve su código interno y un mensaje claro.
+ */
 class ExcepcionesDeDominioTest {
 
     static Stream<Arguments> casos() {

@@ -7,6 +7,9 @@ import org.junit.jupiter.api.Test;
 
 import com.mineria.equipos.generated.model.HealthResponse;
 
+/**
+ * Que la respuesta del /health lleve el estado y la versión.
+ */
 class HealthMapperTest {
 
     private final HealthMapper mapper = new HealthMapperImpl();

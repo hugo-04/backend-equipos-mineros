@@ -17,6 +17,9 @@ import com.mineria.equipos.testsupport.PersistenciaTest;
 import com.mineria.equipos.tipo.entity.TipoEquipo;
 import com.mineria.equipos.tipo.repository.projection.TipoProjection;
 
+/**
+ * El catálogo de tipos contra la base real: los tres tipos que deja la migración, en orden y paginados.
+ */
 @PersistenciaTest
 class TipoRepositoryTest {
 

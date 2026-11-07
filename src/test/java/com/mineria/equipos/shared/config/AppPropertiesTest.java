@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Las validaciones de la configuración al arrancar, empezando por cuándo se considera configurado al administrador.
+ */
 class AppPropertiesTest {
 
     @Test

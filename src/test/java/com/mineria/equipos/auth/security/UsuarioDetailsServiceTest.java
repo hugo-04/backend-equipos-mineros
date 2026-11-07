@@ -20,6 +20,9 @@ import com.mineria.equipos.auth.entity.Usuario;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.auth.repository.UsuarioRepository;
 
+/**
+ * Que se cargue el usuario con su hash y su rol como ROLE_*, y que falle si no existe.
+ */
 @ExtendWith(MockitoExtension.class)
 class UsuarioDetailsServiceTest {
 

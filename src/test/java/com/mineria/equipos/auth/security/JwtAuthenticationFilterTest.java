@@ -17,6 +17,10 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.mineria.equipos.shared.exception.TokenJwtException;
 
+/**
+ * El filtro del JWT: con un token bueno deja autenticada la petición; con uno malo anota el motivo y deja
+ * seguir, para que el entry point conteste el 401. Si algo inesperado falla al validar, la petición queda sin autenticar.
+ */
 class JwtAuthenticationFilterTest {
 
     private final JwtService jwtService = mock(JwtService.class);

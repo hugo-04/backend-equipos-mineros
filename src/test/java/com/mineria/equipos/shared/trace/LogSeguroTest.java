@@ -5,6 +5,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+/**
+ * Que lo que escribe el usuario se limpie (saltos de línea, tabs, textos largos, null) antes de llegar a un log.
+ */
 class LogSeguroTest {
 
     @Test
