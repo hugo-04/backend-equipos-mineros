@@ -1,6 +1,7 @@
 package com.mineria.equipos.integracion;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.DisplayName;
@@ -30,6 +31,15 @@ class SwaggerPorPerfilIntegrationTest {
         void disponible() throws Exception {
             mockMvc.perform(get("/v3/api-docs")).andExpect(status().isOk());
             mockMvc.perform(get("/swagger-ui/index.html")).andExpect(status().isOk());
+        }
+
+        @Test
+        @DisplayName("la CSP estricta de la API no se aplica a Swagger UI (necesita cargar sus scripts), pero el resto de cabeceras sí")
+        void cspNoRompeSwagger() throws Exception {
+            mockMvc.perform(get("/swagger-ui/index.html"))
+                    .andExpect(header().doesNotExist("Content-Security-Policy"))
+                    .andExpect(header().string("X-Content-Type-Options", "nosniff"));
+            mockMvc.perform(get("/health")).andExpect(header().exists("Content-Security-Policy"));
         }
     }
 

@@ -43,6 +43,8 @@ spring:
 
 server:
   port: ${PORT:8080}
+  # Detrás del proxy del hosting: toma la IP y el esquema reales de X-Forwarded-* (Tomcat solo confía en proxies internos)
+  forward-headers-strategy: native
   shutdown: graceful
   error:
     include-stacktrace: never
