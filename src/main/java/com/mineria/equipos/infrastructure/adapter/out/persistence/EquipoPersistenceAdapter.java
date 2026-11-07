@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component;
 import com.mineria.equipos.application.port.out.EquipoQueryPort;
 import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.domain.exception.CodigoDuplicadoException;
+import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.domain.model.Equipo;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.mapper.EquipoPersistenceMapper;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.repository.EquipoJpaRepository;

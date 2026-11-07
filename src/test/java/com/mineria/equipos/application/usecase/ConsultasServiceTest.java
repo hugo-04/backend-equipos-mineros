@@ -20,7 +20,7 @@ import com.mineria.equipos.application.port.out.TipoEquipoQueryPort;
 import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.MantenimientoView;
 import com.mineria.equipos.application.view.TipoEquipoView;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.testsupport.Datos;
 
 /** Pruebas de los casos de uso de solo lectura (equipos, tipos y mantenimientos). */

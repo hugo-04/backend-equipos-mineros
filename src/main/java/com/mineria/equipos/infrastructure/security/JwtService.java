@@ -1,5 +1,7 @@
 package com.mineria.equipos.infrastructure.security;
 
+import com.mineria.equipos.shared.exception.TokenJwtException;
+
 import java.nio.charset.StandardCharsets;
 import java.time.Clock;
 import java.time.Duration;

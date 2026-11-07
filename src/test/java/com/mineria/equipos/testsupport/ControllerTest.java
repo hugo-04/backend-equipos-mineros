@@ -11,8 +11,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.core.annotation.AliasFor;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.mineria.equipos.infrastructure.adapter.in.web.error.ErrorResponseFactory;
-import com.mineria.equipos.infrastructure.adapter.in.web.error.GlobalExceptionHandler;
+import com.mineria.equipos.shared.exception.ErrorResponseFactory;
+import com.mineria.equipos.shared.exception.GlobalExceptionHandler;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.AuthWebMapperImpl;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.EquipoWebMapperImpl;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.HealthWebMapperImpl;

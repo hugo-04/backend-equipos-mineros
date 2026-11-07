@@ -7,10 +7,10 @@ import com.mineria.equipos.application.port.in.ActualizarEquipoUseCase;
 import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
 import com.mineria.equipos.application.port.out.TipoEquipoRepositoryPort;
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.domain.exception.CodigoDuplicadoException;
-import com.mineria.equipos.domain.exception.DomainException;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
-import com.mineria.equipos.domain.exception.TipoEquipoNotFoundException;
+import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
+import com.mineria.equipos.shared.exception.DomainException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
 import com.mineria.equipos.domain.model.Equipo;
 import com.mineria.equipos.domain.model.TipoEquipo;
 

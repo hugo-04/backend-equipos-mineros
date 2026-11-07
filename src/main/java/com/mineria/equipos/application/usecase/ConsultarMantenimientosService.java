@@ -9,7 +9,7 @@ import com.mineria.equipos.application.port.in.ConsultarMantenimientosUseCase;
 import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
 import com.mineria.equipos.application.port.out.MantenimientoQueryPort;
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 

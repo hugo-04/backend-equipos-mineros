@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.mineria.equipos.application.port.out.EquipoQueryPort;
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.domain.model.EstadoMantenimiento;
 import com.mineria.equipos.domain.rule.MantenimientoPolicy;
 

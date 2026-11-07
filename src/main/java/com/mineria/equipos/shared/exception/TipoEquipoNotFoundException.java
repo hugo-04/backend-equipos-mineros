@@ -1,4 +1,4 @@
-package com.mineria.equipos.domain.exception;
+package com.mineria.equipos.shared.exception;
 
 /** Se lanza cuando el tipo de equipo indicado no existe en el catálogo. */
 public class TipoEquipoNotFoundException extends DomainException {

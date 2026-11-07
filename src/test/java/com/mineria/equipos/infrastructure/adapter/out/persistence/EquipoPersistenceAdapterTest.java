@@ -13,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.domain.exception.CodigoDuplicadoException;
+import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.domain.model.Equipo;
 import com.mineria.equipos.domain.model.Mantenimiento;
 import com.mineria.equipos.domain.model.TipoEquipo;

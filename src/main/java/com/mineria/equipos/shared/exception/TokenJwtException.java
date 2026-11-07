@@ -1,4 +1,4 @@
-package com.mineria.equipos.infrastructure.security;
+package com.mineria.equipos.shared.exception;
 
 import org.springframework.security.core.AuthenticationException;
 

@@ -16,7 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mineria.equipos.application.port.out.EquipoQueryPort;
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.domain.rule.IntervaloMantenimientoPolicy;
 import com.mineria.equipos.testsupport.Datos;
 

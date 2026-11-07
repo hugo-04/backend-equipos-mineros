@@ -1,4 +1,4 @@
-package com.mineria.equipos.domain.exception;
+package com.mineria.equipos.shared.exception;
 
 /** Se lanza cuando ya hay otro equipo con el mismo código. */
 public class CodigoDuplicadoException extends DomainException {

@@ -9,7 +9,7 @@ import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-import com.mineria.equipos.domain.exception.HorometroInvalidoException;
+import com.mineria.equipos.shared.exception.HorometroInvalidoException;
 
 class EquipoTest {
 

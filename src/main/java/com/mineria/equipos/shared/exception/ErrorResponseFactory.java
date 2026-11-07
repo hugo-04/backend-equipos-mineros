@@ -1,4 +1,4 @@
-package com.mineria.equipos.infrastructure.adapter.in.web.error;
+package com.mineria.equipos.shared.exception;
 
 import java.time.Clock;
 import java.util.List;

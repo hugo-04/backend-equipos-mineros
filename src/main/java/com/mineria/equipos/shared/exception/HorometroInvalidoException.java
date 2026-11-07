@@ -1,4 +1,4 @@
-package com.mineria.equipos.domain.exception;
+package com.mineria.equipos.shared.exception;
 
 /** Se lanza cuando un horómetro rompe una regla de negocio, por ejemplo al intentar bajarlo. */
 public class HorometroInvalidoException extends DomainException {

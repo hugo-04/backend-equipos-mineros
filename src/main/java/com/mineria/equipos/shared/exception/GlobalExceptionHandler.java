@@ -1,4 +1,4 @@
-package com.mineria.equipos.infrastructure.adapter.in.web.error;
+package com.mineria.equipos.shared.exception;
 
 import java.util.List;
 import java.util.stream.Stream;
@@ -23,12 +23,12 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
-import com.mineria.equipos.domain.exception.CodigoDuplicadoException;
-import com.mineria.equipos.domain.exception.CredencialesInvalidasException;
-import com.mineria.equipos.domain.exception.DomainException;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
-import com.mineria.equipos.domain.exception.HorometroInvalidoException;
-import com.mineria.equipos.domain.exception.TipoEquipoNotFoundException;
+import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
+import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
+import com.mineria.equipos.shared.exception.DomainException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.HorometroInvalidoException;
+import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
 import com.mineria.equipos.generated.model.ErrorDetail;
 import com.mineria.equipos.generated.model.ErrorResponse;
 

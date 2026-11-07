@@ -10,8 +10,8 @@ import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
 import com.mineria.equipos.application.port.out.MantenimientoQueryPort;
 import com.mineria.equipos.application.port.out.MantenimientoRepositoryPort;
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.domain.exception.DomainException;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.DomainException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.domain.model.Equipo;
 import com.mineria.equipos.domain.model.Mantenimiento;
 

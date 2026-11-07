@@ -8,7 +8,7 @@ import com.mineria.equipos.application.port.out.PasswordHasherPort;
 import com.mineria.equipos.application.port.out.TokenProviderPort;
 import com.mineria.equipos.application.port.out.UsuarioRepositoryPort;
 import com.mineria.equipos.application.view.SesionView;
-import com.mineria.equipos.domain.exception.CredencialesInvalidasException;
+import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
 import com.mineria.equipos.domain.model.Usuario;
 
 import lombok.RequiredArgsConstructor;

@@ -5,8 +5,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.mineria.equipos.application.port.in.EliminarEquipoUseCase;
 import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
-import com.mineria.equipos.domain.exception.DomainException;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.DomainException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,5 +1,7 @@
 package com.mineria.equipos.infrastructure.security;
 
+import com.mineria.equipos.shared.exception.TokenJwtException;
+
 import java.io.IOException;
 
 import org.springframework.http.HttpHeaders;

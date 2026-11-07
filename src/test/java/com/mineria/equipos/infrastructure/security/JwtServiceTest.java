@@ -1,5 +1,7 @@
 package com.mineria.equipos.infrastructure.security;
 
+import com.mineria.equipos.shared.exception.TokenJwtException;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 

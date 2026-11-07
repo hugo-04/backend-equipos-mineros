@@ -3,7 +3,7 @@ package com.mineria.equipos.domain.model;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.mineria.equipos.domain.exception.HorometroInvalidoException;
+import com.mineria.equipos.shared.exception.HorometroInvalidoException;
 import com.mineria.equipos.domain.rule.MantenimientoPolicy;
 
 import lombok.Builder;

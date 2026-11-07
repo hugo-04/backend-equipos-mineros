@@ -1,4 +1,4 @@
-package com.mineria.equipos.domain.exception;
+package com.mineria.equipos.shared.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -1,4 +1,4 @@
-package com.mineria.equipos.domain.exception;
+package com.mineria.equipos.shared.exception;
 
 /**
  * Se lanza cuando el usuario o la contraseña no coinciden.

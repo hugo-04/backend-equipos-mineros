@@ -1,4 +1,4 @@
-package com.mineria.equipos.domain.exception;
+package com.mineria.equipos.shared.exception;
 
 /** Se lanza cuando se pide un equipo que no existe. */
 public class EquipoNotFoundException extends DomainException {

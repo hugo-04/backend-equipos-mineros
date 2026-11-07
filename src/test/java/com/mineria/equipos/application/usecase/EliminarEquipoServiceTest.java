@@ -14,7 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
-import com.mineria.equipos.domain.exception.EquipoNotFoundException;
+import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 
 @ExtendWith(MockitoExtension.class)
 class EliminarEquipoServiceTest {

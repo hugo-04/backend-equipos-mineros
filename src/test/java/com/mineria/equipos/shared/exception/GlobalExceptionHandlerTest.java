@@ -1,4 +1,4 @@
-package com.mineria.equipos.infrastructure.adapter.in.web.error;
+package com.mineria.equipos.shared.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.not;
