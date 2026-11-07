@@ -7,8 +7,8 @@ import org.mapstruct.Mapping;
 
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.MantenimientoRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.MantenimientoResponse;
+import com.mineria.equipos.generated.model.MantenimientoRequest;
+import com.mineria.equipos.generated.model.MantenimientoResponse;
 
 /** Convierte entre los DTOs de mantenimientos y los comandos/views de la capa de aplicación. */
 @Mapper

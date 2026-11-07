@@ -139,8 +139,8 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/openapi/openapi.yaml</inputSpec>
                             <generatorName>spring</generatorName>
-                            <apiPackage>com.mineria.equipos.infrastructure.adapter.in.web.generated.api</apiPackage>
-                            <modelPackage>com.mineria.equipos.infrastructure.adapter.in.web.generated.model</modelPackage>
+                            <apiPackage>com.mineria.equipos.generated.api</apiPackage>
+                            <modelPackage>com.mineria.equipos.generated.model</modelPackage>
                             <generateApiTests>false</generateApiTests>
                             <generateModelTests>false</generateModelTests>
                             <generateApiDocumentation>false</generateApiDocumentation>
@@ -214,8 +214,8 @@
                 <version>${jacoco.version}</version>
                 <configuration>
                     <excludes>
-                        <exclude>com/mineria/equipos/infrastructure/adapter/in/web/generated/**</exclude>
-                        <exclude>com/mineria/equipos/EquiposMinerosApplication.class</exclude>
+                        <exclude>com/mineria/equipos/generated/**</exclude>
+                        <exclude>com/mineria/equipos/EquiposApplication.class</exclude>
                         <exclude>com/mineria/equipos/infrastructure/adapter/out/persistence/entity/**</exclude>
                     </excludes>
                 </configuration>

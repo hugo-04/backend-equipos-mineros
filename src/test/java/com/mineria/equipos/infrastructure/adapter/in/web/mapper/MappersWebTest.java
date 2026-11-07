@@ -18,14 +18,14 @@ import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.EstadoSalud;
 import com.mineria.equipos.application.view.SesionView;
 import com.mineria.equipos.application.view.TipoEquipoView;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.EquipoRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.EquipoResponse;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.HealthResponse;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.LoginRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.LoginResponse;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.MantenimientoRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.MantenimientoResponse;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.TipoEquipoResponse;
+import com.mineria.equipos.generated.model.EquipoRequest;
+import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.HealthResponse;
+import com.mineria.equipos.generated.model.LoginRequest;
+import com.mineria.equipos.generated.model.LoginResponse;
+import com.mineria.equipos.generated.model.MantenimientoRequest;
+import com.mineria.equipos.generated.model.MantenimientoResponse;
+import com.mineria.equipos.generated.model.TipoEquipoResponse;
 import com.mineria.equipos.testsupport.Datos;
 
 @SpringJUnitConfig({EquipoWebMapperImpl.class, MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class,

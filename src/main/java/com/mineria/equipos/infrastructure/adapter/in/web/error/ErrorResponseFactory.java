@@ -6,8 +6,8 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.ErrorDetail;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.ErrorResponse;
+import com.mineria.equipos.generated.model.ErrorDetail;
+import com.mineria.equipos.generated.model.ErrorResponse;
 
 import lombok.RequiredArgsConstructor;
 

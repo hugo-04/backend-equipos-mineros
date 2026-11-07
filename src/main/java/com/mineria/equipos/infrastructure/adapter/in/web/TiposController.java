@@ -6,8 +6,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mineria.equipos.application.port.in.ConsultarTiposUseCase;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.api.TiposApi;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.TipoEquipoResponse;
+import com.mineria.equipos.generated.api.TiposApi;
+import com.mineria.equipos.generated.model.TipoEquipoResponse;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.EquipoWebMapper;
 
 import lombok.RequiredArgsConstructor;

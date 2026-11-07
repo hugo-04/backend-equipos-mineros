@@ -9,9 +9,9 @@ import com.mineria.equipos.application.port.in.ActualizarEquipoUseCase;
 import com.mineria.equipos.application.port.in.CrearEquipoUseCase;
 import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.TipoEquipoView;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.EquipoRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.EquipoResponse;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.TipoEquipoResponse;
+import com.mineria.equipos.generated.model.EquipoRequest;
+import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.TipoEquipoResponse;
 
 /** Convierte entre los DTOs generados por OpenAPI y los comandos/views de la capa de aplicación. */
 @Mapper

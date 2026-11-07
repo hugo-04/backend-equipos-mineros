@@ -6,8 +6,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.mineria.equipos.application.port.in.VerificarSaludUseCase;
 import com.mineria.equipos.application.view.EstadoSalud;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.api.SaludApi;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.HealthResponse;
+import com.mineria.equipos.generated.api.SaludApi;
+import com.mineria.equipos.generated.model.HealthResponse;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.HealthWebMapper;
 import com.mineria.equipos.infrastructure.config.AppProperties;
 

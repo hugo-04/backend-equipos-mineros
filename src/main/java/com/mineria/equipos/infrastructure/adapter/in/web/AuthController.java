@@ -4,9 +4,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.mineria.equipos.application.port.in.AutenticarUsuarioUseCase;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.api.AuthApi;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.LoginRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.LoginResponse;
+import com.mineria.equipos.generated.api.AuthApi;
+import com.mineria.equipos.generated.model.LoginRequest;
+import com.mineria.equipos.generated.model.LoginResponse;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.AuthWebMapper;
 
 import lombok.RequiredArgsConstructor;

@@ -8,9 +8,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * No tiene lógica: solo arranca Spring Boot y deja que cada capa se cablee sola.
  */
 @SpringBootApplication
-public class EquiposMinerosApplication {
+public class EquiposApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(EquiposMinerosApplication.class, args);
+        SpringApplication.run(EquiposApplication.class, args);
     }
 }

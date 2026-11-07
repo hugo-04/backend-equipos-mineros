@@ -12,9 +12,9 @@ import com.mineria.equipos.application.port.in.ConsultarEquiposUseCase;
 import com.mineria.equipos.application.port.in.CrearEquipoUseCase;
 import com.mineria.equipos.application.port.in.EliminarEquipoUseCase;
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.api.EquiposApi;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.EquipoRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.api.EquiposApi;
+import com.mineria.equipos.generated.model.EquipoRequest;
+import com.mineria.equipos.generated.model.EquipoResponse;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.EquipoWebMapper;
 
 import lombok.RequiredArgsConstructor;

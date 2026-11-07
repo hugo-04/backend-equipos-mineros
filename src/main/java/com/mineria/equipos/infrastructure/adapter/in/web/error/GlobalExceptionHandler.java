@@ -29,8 +29,8 @@ import com.mineria.equipos.domain.exception.DomainException;
 import com.mineria.equipos.domain.exception.EquipoNotFoundException;
 import com.mineria.equipos.domain.exception.HorometroInvalidoException;
 import com.mineria.equipos.domain.exception.TipoEquipoNotFoundException;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.ErrorDetail;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.ErrorResponse;
+import com.mineria.equipos.generated.model.ErrorDetail;
+import com.mineria.equipos.generated.model.ErrorResponse;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;

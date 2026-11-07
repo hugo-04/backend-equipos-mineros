@@ -10,9 +10,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.mineria.equipos.application.port.in.ConsultarMantenimientosUseCase;
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.api.MantenimientosApi;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.MantenimientoRequest;
-import com.mineria.equipos.infrastructure.adapter.in.web.generated.model.MantenimientoResponse;
+import com.mineria.equipos.generated.api.MantenimientosApi;
+import com.mineria.equipos.generated.model.MantenimientoRequest;
+import com.mineria.equipos.generated.model.MantenimientoResponse;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.MantenimientoWebMapper;
 
 import lombok.RequiredArgsConstructor;
