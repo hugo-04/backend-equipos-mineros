@@ -120,6 +120,20 @@ class MappersPersistenciaTest {
     }
 
     @Test
+    @DisplayName("tipo: una proyección sin intervalo no rompe el mapeo")
+    void tipoSinIntervalo() {
+        // Arrange
+        TipoEquipoProjection proyeccion = new TipoEquipoProjection() {
+            public Long getId() { return 1L; }
+            public String getNombre() { return "Sin intervalo"; }
+            public Integer getIntervaloHoras() { return null; }
+        };
+
+        // Act + Assert
+        assertThat(tipoMapper.toView(proyeccion).getIntervaloHoras()).isZero();
+    }
+
+    @Test
     @DisplayName("mantenimiento: dominio <-> entidad y proyección -> view")
     void mantenimiento() {
         // Arrange

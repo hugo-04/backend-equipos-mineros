@@ -3,6 +3,7 @@ package com.mineria.equipos.testsupport;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.dao.DataIntegrityViolationException;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.ConstraintViolation;
@@ -56,6 +58,19 @@ public class ErroresDePruebaController {
         when(violacion.getPropertyPath()).thenReturn(ruta);
         when(violacion.getMessage()).thenReturn("debe ser mayor que o igual a 1");
         throw new ConstraintViolationException(Set.of(violacion));
+    }
+
+    @GetMapping(value = "/salida-json", produces = MediaType.APPLICATION_JSON_VALUE)
+    String salidaJson() {
+        return "{}";
+    }
+
+    @GetMapping("/con-parametro")
+    void conParametro(@RequestParam String obligatorio) {
+    }
+
+    @PostMapping(value = "/mapa", consumes = MediaType.APPLICATION_JSON_VALUE)
+    void mapa(@RequestBody Map<String, Object> cuerpo) {
     }
 
     @PostMapping(value = "/solo-json", consumes = MediaType.APPLICATION_JSON_VALUE)

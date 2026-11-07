@@ -24,9 +24,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.validation.BeanPropertyBindingResult;
 import org.springframework.validation.method.MethodValidationResult;
 import org.springframework.validation.method.ParameterValidationResult;
 import org.springframework.web.context.request.ServletWebRequest;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 
 import com.mineria.equipos.domain.model.Rol;
@@ -163,5 +165,70 @@ class GlobalExceptionHandlerTest {
         // Assert
         assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
         assertThat(String.valueOf(respuesta.getBody())).contains("VALIDACION_FALLIDA", "id", "debe ser mayor que o igual a 1");
+    }
+
+    @Test
+    @DisplayName("Accept incompatible: 406 con el formato común")
+    void formatoNoDisponible() throws Exception {
+        // Act + Assert
+        mockMvc.perform(get("/pruebas/salida-json").header(HttpHeaders.AUTHORIZATION, token())
+                        .accept(MediaType.APPLICATION_XML))
+                .andExpect(status().isNotAcceptable())
+                .andExpect(jsonPath("$.code").value("FORMATO_NO_DISPONIBLE"));
+    }
+
+    @Test
+    @DisplayName("falta un parámetro obligatorio: 400 genérico PETICION_INVALIDA")
+    void parametroObligatorioAusente() throws Exception {
+        // Act + Assert
+        mockMvc.perform(get("/pruebas/con-parametro").header(HttpHeaders.AUTHORIZATION, token()))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PETICION_INVALIDA"));
+    }
+
+    @Test
+    @DisplayName("JSON con otra forma (un array donde va un objeto): 400 JSON_INVALIDO sin campo")
+    void jsonConOtraForma() throws Exception {
+        // Act + Assert
+        mockMvc.perform(post("/pruebas/mapa").header(HttpHeaders.AUTHORIZATION, token())
+                        .contentType(MediaType.APPLICATION_JSON).content("[1,2]"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("JSON_INVALIDO"))
+                .andExpect(jsonPath("$.details").isEmpty());
+    }
+
+    @Test
+    @DisplayName("un error 5xx de Spring MVC sale con el código ERROR_INTERNO y mensaje genérico")
+    void errorDeServidorDeSpring() {
+        // Arrange
+        MockHttpServletRequest peticion = new MockHttpServletRequest("GET", "/algo");
+
+        // Act
+        ResponseEntity<Object> respuesta = handler.handleExceptionInternal(new IllegalStateException("interno"), null,
+                new HttpHeaders(), HttpStatus.SERVICE_UNAVAILABLE, new ServletWebRequest(peticion));
+
+        // Assert
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.SERVICE_UNAVAILABLE);
+        assertThat(String.valueOf(respuesta.getBody())).contains("ERROR_INTERNO", "Ocurrió un error inesperado")
+                .doesNotContain("interno");
+    }
+
+    @Test
+    @DisplayName("errores globales de validación (no atados a un campo) también salen en details")
+    void erroresGlobalesDeValidacion() throws Exception {
+        // Arrange
+        BeanPropertyBindingResult resultado = new BeanPropertyBindingResult(new Object(), "equipoRequest");
+        resultado.reject("FechasIncoherentes", "las fechas no son coherentes");
+        MethodParameter parametro = new MethodParameter(Object.class.getMethod("toString"), -1);
+        MethodArgumentNotValidException excepcion = new MethodArgumentNotValidException(parametro, resultado);
+        MockHttpServletRequest peticion = new MockHttpServletRequest("POST", "/equipos");
+
+        // Act
+        ResponseEntity<Object> respuesta = handler.handleMethodArgumentNotValid(
+                excepcion, new HttpHeaders(), HttpStatus.BAD_REQUEST, new ServletWebRequest(peticion));
+
+        // Assert
+        assertThat(respuesta.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(String.valueOf(respuesta.getBody())).contains("equipoRequest", "las fechas no son coherentes");
     }
 }

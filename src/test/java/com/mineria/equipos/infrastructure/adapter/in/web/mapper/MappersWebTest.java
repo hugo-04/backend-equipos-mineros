@@ -172,6 +172,7 @@ class MappersWebTest {
         assertThat(up.getVersion()).isEqualTo("abc123");
         assertThat(down.getStatus()).isEqualTo(HealthResponse.StatusEnum.DOWN);
         assertThat(healthMapper.toResponse(null, null)).isNull();
+        assertThat(healthMapper.toResponse(null, "solo-version").getStatus()).isNull();
     }
 
     @Test
