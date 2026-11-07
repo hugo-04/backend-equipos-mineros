@@ -2,7 +2,6 @@ package com.mineria.equipos.mantenimiento.repository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -12,8 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.mineria.equipos.equipo.entity.Equipo;
-import com.mineria.equipos.equipo.repository.EquipoRepository;
 import com.mineria.equipos.mantenimiento.entity.Mantenimiento;
+import com.mineria.equipos.equipo.repository.EquipoRepository;
 import com.mineria.equipos.mantenimiento.repository.projection.MantenimientoProjection;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.PersistenciaTest;
@@ -27,12 +26,7 @@ class MantenimientoRepositoryTest {
     private EquipoRepository equipos;
 
     private Equipo equipoGuardado(String codigo, String horometro) {
-        Equipo equipo = new Equipo();
-        equipo.setCodigo(codigo);
-        equipo.setTipoId(1L);
-        equipo.setHorometro(new BigDecimal(horometro));
-        equipo.darDeAlta(Datos.AHORA);
-        return equipos.saveAndFlush(equipo);
+        return equipos.saveAndFlush(Datos.nuevoEquipo(codigo, 1L, horometro));
     }
 
     @Test
@@ -40,9 +34,9 @@ class MantenimientoRepositoryTest {
     void historialOrdenado() {
         // Arrange
         Equipo equipo = equipoGuardado("CAM-070", "500.0");
-        repository.saveAndFlush(Mantenimiento.registrarPara(equipo.getId(), new BigDecimal("250.0"), "Viejo",
+        repository.saveAndFlush(Datos.mantenimiento(equipo.getId(), "250.0", "Viejo",
                 Instant.parse("2026-01-01T00:00:00Z")));
-        repository.saveAndFlush(Mantenimiento.registrarPara(equipo.getId(), new BigDecimal("500.0"), "Nuevo",
+        repository.saveAndFlush(Datos.mantenimiento(equipo.getId(), "500.0", "Nuevo",
                 Instant.parse("2026-03-01T00:00:00Z")));
 
         // Act
@@ -59,8 +53,8 @@ class MantenimientoRepositoryTest {
         // Arrange
         Equipo a = equipoGuardado("CAM-072", "300.0");
         Equipo b = equipoGuardado("CAM-073", "300.0");
-        repository.saveAndFlush(Mantenimiento.registrarPara(a.getId(), new BigDecimal("300.0"), "De A", Datos.AHORA));
-        repository.saveAndFlush(Mantenimiento.registrarPara(b.getId(), new BigDecimal("300.0"), "De B", Datos.AHORA));
+        repository.saveAndFlush(Datos.mantenimiento(a.getId(), "300.0", "De A", Datos.AHORA));
+        repository.saveAndFlush(Datos.mantenimiento(b.getId(), "300.0", "De B", Datos.AHORA));
 
         // Act + Assert
         assertThat(repository.findByEquipoIdOrderByFechaDescIdDesc(a.getId()))
@@ -73,7 +67,7 @@ class MantenimientoRepositoryTest {
         // Arrange
         Equipo equipo = equipoGuardado("CAM-071", "260.0");
         Mantenimiento guardado = repository.saveAndFlush(
-                Mantenimiento.registrarPara(equipo.getId(), equipo.getHorometro(), null, Datos.AHORA));
+                Datos.mantenimiento(equipo.getId(), "260.0", null, Datos.AHORA));
 
         // Act
         Optional<MantenimientoProjection> existente = repository.findProjectedById(guardado.getId());

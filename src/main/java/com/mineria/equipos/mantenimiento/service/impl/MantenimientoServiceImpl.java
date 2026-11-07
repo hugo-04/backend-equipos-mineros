@@ -43,7 +43,7 @@ public class MantenimientoServiceImpl implements MantenimientoService {
             // que es el que queda guardado en el historial
             BigDecimal horometro = equipoService.reiniciarCiclo(equipoId);
             Mantenimiento guardado = repository.saveAndFlush(
-                    Mantenimiento.registrarPara(equipoId, horometro, request.getNotas(), clock.instant()));
+                    mapper.toEntity(equipoId, horometro, request.getNotas(), clock.instant()));
 
             log.info("Mantenimiento registrado: equipoId={}, horometro={}", equipoId, guardado.getHorometroAlRegistrar());
             return repository.findProjectedById(guardado.getId())

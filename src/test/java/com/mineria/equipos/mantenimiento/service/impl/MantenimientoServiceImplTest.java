@@ -48,7 +48,7 @@ class MantenimientoServiceImplTest {
     }
 
     private Mantenimiento guardadoConId(Long id) {
-        Mantenimiento m = Mantenimiento.registrarPara(8L, new BigDecimal("310.5"), "Cambio de aceite", Datos.AHORA);
+        Mantenimiento m = Datos.mantenimiento(8L, "310.5", "Cambio de aceite", Datos.AHORA);
         m.setId(id);
         return m;
     }

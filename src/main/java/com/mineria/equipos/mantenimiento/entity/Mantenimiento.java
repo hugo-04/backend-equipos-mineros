@@ -41,14 +41,4 @@ public class Mantenimiento {
 
     @Column(length = 500)
     private String notas;
-
-    /** Factory: arma el mantenimiento con el horómetro que tenía el equipo al registrarlo. */
-    public static Mantenimiento registrarPara(Long equipoId, BigDecimal horometro, String notas, Instant fecha) {
-        Mantenimiento mantenimiento = new Mantenimiento();
-        mantenimiento.equipoId = equipoId;
-        mantenimiento.horometroAlRegistrar = horometro;
-        mantenimiento.notas = notas;
-        mantenimiento.fecha = fecha;
-        return mantenimiento;
-    }
 }
