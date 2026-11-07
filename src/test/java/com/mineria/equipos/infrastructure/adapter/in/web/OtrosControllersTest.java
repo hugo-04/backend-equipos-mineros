@@ -21,8 +21,6 @@ import com.mineria.equipos.application.port.in.AutenticarUsuarioUseCase;
 import com.mineria.equipos.application.port.in.ConsultarMantenimientosUseCase;
 import com.mineria.equipos.application.port.in.ConsultarTiposUseCase;
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
-import com.mineria.equipos.application.port.in.VerificarSaludUseCase;
-import com.mineria.equipos.application.view.EstadoSalud;
 import com.mineria.equipos.application.view.SesionView;
 import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
@@ -33,7 +31,7 @@ import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.Tokens;
 
 /** Controllers de login, health, tipos y mantenimientos. */
-@ControllerTest({AuthController.class, SaludController.class, TiposController.class, MantenimientosController.class})
+@ControllerTest({AuthController.class, TiposController.class, MantenimientosController.class})
 class OtrosControllersTest {
 
     @Autowired
@@ -41,8 +39,6 @@ class OtrosControllersTest {
 
     @MockitoBean
     private AutenticarUsuarioUseCase autenticarUsuario;
-    @MockitoBean
-    private VerificarSaludUseCase verificarSalud;
     @MockitoBean
     private ConsultarTiposUseCase consultarTipos;
     @MockitoBean
@@ -98,33 +94,6 @@ class OtrosControllersTest {
         mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDACION_FALLIDA"));
-    }
-
-    // ---------- /health ----------
-
-    @Test
-    @DisplayName("GET /health: 200 UP y la versión, público")
-    void healthUp() throws Exception {
-        // Arrange
-        when(verificarSalud.verificar()).thenReturn(EstadoSalud.UP);
-
-        // Act + Assert
-        mockMvc.perform(get("/health"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("UP"))
-                .andExpect(jsonPath("$.version").value("test"));
-    }
-
-    @Test
-    @DisplayName("GET /health: 503 DOWN si la base de datos no responde")
-    void healthDown() throws Exception {
-        // Arrange
-        when(verificarSalud.verificar()).thenReturn(EstadoSalud.DOWN);
-
-        // Act + Assert
-        mockMvc.perform(get("/health"))
-                .andExpect(status().isServiceUnavailable())
-                .andExpect(jsonPath("$.status").value("DOWN"));
     }
 
     // ---------- /tipos ----------

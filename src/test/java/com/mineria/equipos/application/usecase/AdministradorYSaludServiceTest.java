@@ -16,14 +16,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mineria.equipos.application.port.out.PasswordHasherPort;
-import com.mineria.equipos.application.port.out.SaludBaseDatosPort;
 import com.mineria.equipos.application.port.out.UsuarioRepositoryPort;
-import com.mineria.equipos.application.view.EstadoSalud;
 import com.mineria.equipos.domain.model.Rol;
 import com.mineria.equipos.domain.model.Usuario;
 import com.mineria.equipos.testsupport.Datos;
 
-/** Pruebas del administrador inicial y del health check. */
+/** Pruebas del administrador inicial. */
 @ExtendWith(MockitoExtension.class)
 class AdministradorYSaludServiceTest {
 
@@ -31,8 +29,6 @@ class AdministradorYSaludServiceTest {
     private UsuarioRepositoryPort usuarioRepository;
     @Mock
     private PasswordHasherPort passwordHasher;
-    @Mock
-    private SaludBaseDatosPort saludBaseDatos;
 
     @Test
     @DisplayName("crea el administrador con la clave hasheada cuando no existe")
@@ -64,31 +60,5 @@ class AdministradorYSaludServiceTest {
         // Assert
         assertThat(creado).isFalse();
         verify(usuarioRepository, never()).guardar(any());
-    }
-
-    @Test
-    @DisplayName("salud: UP cuando la base de datos responde")
-    void saludUp() {
-        // Arrange
-        when(saludBaseDatos.estaDisponible()).thenReturn(true);
-
-        // Act
-        EstadoSalud estado = new VerificarSaludService(saludBaseDatos).verificar();
-
-        // Assert
-        assertThat(estado).isEqualTo(EstadoSalud.UP);
-    }
-
-    @Test
-    @DisplayName("salud: DOWN cuando la base de datos no responde")
-    void saludDown() {
-        // Arrange
-        when(saludBaseDatos.estaDisponible()).thenReturn(false);
-
-        // Act
-        EstadoSalud estado = new VerificarSaludService(saludBaseDatos).verificar();
-
-        // Assert
-        assertThat(estado).isEqualTo(EstadoSalud.DOWN);
     }
 }

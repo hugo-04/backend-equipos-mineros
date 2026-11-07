@@ -15,12 +15,10 @@ import com.mineria.equipos.application.port.in.AutenticarUsuarioUseCase;
 import com.mineria.equipos.application.port.in.CrearEquipoUseCase;
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.application.view.EstadoSalud;
 import com.mineria.equipos.application.view.SesionView;
 import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
-import com.mineria.equipos.generated.model.HealthResponse;
 import com.mineria.equipos.generated.model.LoginRequest;
 import com.mineria.equipos.generated.model.LoginResponse;
 import com.mineria.equipos.generated.model.MantenimientoRequest;
@@ -28,8 +26,7 @@ import com.mineria.equipos.generated.model.MantenimientoResponse;
 import com.mineria.equipos.generated.model.TipoEquipoResponse;
 import com.mineria.equipos.testsupport.Datos;
 
-@SpringJUnitConfig({EquipoWebMapperImpl.class, MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class,
-        HealthWebMapperImpl.class})
+@SpringJUnitConfig({EquipoWebMapperImpl.class, MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class})
 class MappersWebTest {
 
     @Autowired
@@ -38,8 +35,6 @@ class MappersWebTest {
     private MantenimientoWebMapper mantenimientoMapper;
     @Autowired
     private AuthWebMapper authMapper;
-    @Autowired
-    private HealthWebMapper healthMapper;
 
     @Test
     @DisplayName("equipo: el request se convierte en el comando de crear")
@@ -158,21 +153,6 @@ class MappersWebTest {
         assertThat(comando).isEqualTo(new AutenticarUsuarioUseCase.Comando("admin", "clave"));
         assertThat(response.getAccessToken()).isEqualTo("jwt");
         assertThat(response.getExpiresIn()).isEqualTo(3600L);
-    }
-
-    @Test
-    @DisplayName("health: arma la respuesta con el estado y la versión")
-    void health() {
-        // Act
-        HealthResponse up = healthMapper.toResponse(EstadoSalud.UP, "abc123");
-        HealthResponse down = healthMapper.toResponse(EstadoSalud.DOWN, null);
-
-        // Assert
-        assertThat(up.getStatus()).isEqualTo(HealthResponse.StatusEnum.UP);
-        assertThat(up.getVersion()).isEqualTo("abc123");
-        assertThat(down.getStatus()).isEqualTo(HealthResponse.StatusEnum.DOWN);
-        assertThat(healthMapper.toResponse(null, null)).isNull();
-        assertThat(healthMapper.toResponse(null, "solo-version").getStatus()).isNull();
     }
 
     @Test

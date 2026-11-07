@@ -17,10 +17,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.mineria.equipos.application.port.in.ConsultarTiposUseCase;
-import com.mineria.equipos.application.port.in.VerificarSaludUseCase;
-import com.mineria.equipos.application.view.EstadoSalud;
+import com.mineria.equipos.generated.model.HealthResponse;
 import com.mineria.equipos.domain.model.Rol;
-import com.mineria.equipos.infrastructure.adapter.in.web.SaludController;
+import com.mineria.equipos.shared.health.HealthController;
+import com.mineria.equipos.shared.health.HealthService;
 import com.mineria.equipos.infrastructure.adapter.in.web.TiposController;
 import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.Tokens;
@@ -29,7 +29,7 @@ import com.mineria.equipos.testsupport.Tokens;
  * Seguridad de punta a punta sobre la cadena real de filtros: token válido, expirado, malformado,
  * con firma falsa o ausente, endpoints públicos y CORS.
  */
-@ControllerTest({TiposController.class, SaludController.class})
+@ControllerTest({TiposController.class, HealthController.class})
 class SeguridadHttpTest {
 
     @Autowired
@@ -38,7 +38,7 @@ class SeguridadHttpTest {
     @MockitoBean
     private ConsultarTiposUseCase consultarTipos;
     @MockitoBean
-    private VerificarSaludUseCase verificarSalud;
+    private HealthService healthService;
 
     @Test
     @DisplayName("token válido: pasa")
@@ -111,7 +111,7 @@ class SeguridadHttpTest {
     @DisplayName("un endpoint público responde aunque el token enviado esté vencido")
     void publicoConTokenVencido() throws Exception {
         // Arrange
-        when(verificarSalud.verificar()).thenReturn(EstadoSalud.UP);
+        when(healthService.verificar()).thenReturn(new HealthResponse().status(HealthResponse.StatusEnum.UP));
 
         // Act + Assert
         mockMvc.perform(get("/health").header(HttpHeaders.AUTHORIZATION, Tokens.bearer(Tokens.expirado("admin", Rol.ADMIN))))
