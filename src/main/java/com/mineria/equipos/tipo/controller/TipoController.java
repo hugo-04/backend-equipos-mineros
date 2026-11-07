@@ -10,7 +10,7 @@ import com.mineria.equipos.tipo.service.TipoService;
 
 import lombok.RequiredArgsConstructor;
 
-/** Endpoint (paginado) del catálogo de tipos de equipo. Solo delega en el servicio. */
+/** El catálogo de tipos de equipo, paginado. No tiene lógica propia: le pasa todo al servicio. */
 @RestController
 @RequiredArgsConstructor
 public class TipoController implements TiposApi {

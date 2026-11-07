@@ -11,8 +11,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Categoría de un equipo (camión, excavadora, perforadora...), fila de la tabla tipo_equipo.
- * Define cada cuántas horas de uso el equipo necesita mantenimiento.
+ * La categoría de un equipo (camión, excavadora, perforadora...). Lo que importa de acá es el
+ * intervaloHoras: cada cuántas horas de uso le toca mantenimiento a los equipos de ese tipo.
  */
 @Getter
 @Setter

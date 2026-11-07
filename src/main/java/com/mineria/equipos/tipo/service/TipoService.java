@@ -5,8 +5,8 @@ import org.springframework.data.domain.Pageable;
 import com.mineria.equipos.generated.model.PaginaTipoEquipoResponse;
 
 /**
- * Servicio del catálogo de tipos de equipo (paginado). Es la única puerta de entrada al módulo para el resto de la
- * aplicación: otros módulos (por ejemplo equipo) preguntan por un tipo a través de esta interfaz.
+ * La puerta de entrada del módulo tipo. Los demás módulos (equipo, por ejemplo) no tocan el repositorio de
+ * tipos: si necesitan saber algo de un tipo, se lo preguntan a esta interfaz.
  */
 public interface TipoService {
 

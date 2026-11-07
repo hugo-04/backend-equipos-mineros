@@ -10,7 +10,7 @@ import com.mineria.equipos.generated.model.TipoEquipoResponse;
 import com.mineria.equipos.shared.pagination.MapeoDePagina;
 import com.mineria.equipos.tipo.repository.projection.TipoProjection;
 
-/** Convierte la proyección de un tipo de equipo al DTO del contrato. */
+/** Pasa la proyección del tipo al DTO que devuelve la API. */
 @Mapper
 public interface TipoMapper {
 

@@ -1,6 +1,6 @@
 package com.mineria.equipos.tipo.repository.projection;
 
-/** Proyección de solo lectura de un tipo de equipo, tal como se muestra en el catálogo. */
+/** Las columnas del tipo tal como salen en el catálogo; es de solo lectura. */
 public interface TipoProjection {
 
     Long getId();

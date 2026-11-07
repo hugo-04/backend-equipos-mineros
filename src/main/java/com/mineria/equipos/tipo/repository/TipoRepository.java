@@ -7,9 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.mineria.equipos.tipo.entity.TipoEquipo;
 import com.mineria.equipos.tipo.repository.projection.TipoProjection;
 
-/** Repositorio Spring Data de tipos de equipo. */
+/** Acceso a la tabla tipo_equipo. */
 public interface TipoRepository extends JpaRepository<TipoEquipo, Long> {
 
-    /** Consulta derivada con proyección y paginación: Spring genera el SELECT (y el COUNT) solo con lo necesario. */
+    /** Devuelve la proyección y no la entidad, así el SELECT trae solo las columnas que se muestran. El COUNT lo arma Spring. */
     Page<TipoProjection> findAllProjectedByOrderByIdAsc(Pageable pageable);
 }

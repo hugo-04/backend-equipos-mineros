@@ -12,7 +12,7 @@ import com.mineria.equipos.tipo.service.TipoService;
 
 import lombok.RequiredArgsConstructor;
 
-/** Lista el catálogo de tipos de equipo con su intervalo de mantenimiento y verifica que un tipo exista. */
+/** Lista el catálogo con el intervalo de mantenimiento de cada tipo y confirma si un tipo existe. */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
