@@ -19,6 +19,7 @@ import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
 import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.EquipoUpdateRequest;
 import com.mineria.equipos.testsupport.Datos;
 
 /**
@@ -66,6 +67,28 @@ class EquipoMapperTest {
     }
 
     @Test
+    @DisplayName("proyección -> DTO: calcula horasDesdeUltimoMant y horasRestantes (nunca negativas)")
+    void calculaLasHoras() {
+        // Arrange: 100 h con el ciclo en 0, 410 h con el ciclo en 160 y 260 h (ya pasó el intervalo)
+        var enCurso = Datos.equipoProjection(1L, "CAM-001", "100.0", "0", 250);
+        var conCiclo = Datos.equipoProjection(2L, "CAM-002", "410.0", "160.0", 250);
+        var vencido = Datos.equipoProjection(3L, "CAM-003", "260.0", "0", 250);
+
+        // Act
+        EquipoResponse r1 = mapper.toResponse(enCurso);
+        EquipoResponse r2 = mapper.toResponse(conCiclo);
+        EquipoResponse r3 = mapper.toResponse(vencido);
+
+        // Assert
+        assertThat(r1.getHorasDesdeUltimoMant()).isEqualByComparingTo("100.0");
+        assertThat(r1.getHorasRestantes()).isEqualByComparingTo("150.0");
+        assertThat(r2.getHorasDesdeUltimoMant()).isEqualByComparingTo("250.0");
+        assertThat(r2.getHorasRestantes()).isEqualByComparingTo("0");
+        assertThat(r3.getHorasDesdeUltimoMant()).isEqualByComparingTo("260.0");
+        assertThat(r3.getHorasRestantes()).isEqualByComparingTo("0");
+    }
+
+    @Test
     @DisplayName("convierte listas de proyecciones")
     void listas() {
         // Act
@@ -95,19 +118,19 @@ class EquipoMapperTest {
     }
 
     @Test
-    @DisplayName("actualizar: copia código, tipo y horómetro sobre la entidad sin tocar id, ciclo ni fecha")
+    @DisplayName("actualizar: copia código y horómetro sobre la entidad sin tocar id, tipo, ciclo ni fecha")
     void actualizaLaEntidadExistente() {
         // Arrange
         Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
         existente.setHorometroUltimoMant(new BigDecimal("40.0"));
 
         // Act
-        mapper.actualizar(new EquipoRequest("EXC-009", 2L, new BigDecimal("150.0")), existente);
+        mapper.actualizar(new EquipoUpdateRequest("CAM-009", new BigDecimal("150.0")), existente);
 
         // Assert
-        assertThat(existente.getCodigo()).isEqualTo("EXC-009");
-        assertThat(existente.getTipoId()).isEqualTo(2L);
+        assertThat(existente.getCodigo()).isEqualTo("CAM-009");
         assertThat(existente.getHorometro()).isEqualByComparingTo("150.0");
+        assertThat(existente.getTipoId()).isEqualTo(1L);
         assertThat(existente.getId()).isEqualTo(3L);
         assertThat(existente.getHorometroUltimoMant()).isEqualByComparingTo("40.0");
         assertThat(existente.getCreadoEn()).isEqualTo(Datos.AHORA);

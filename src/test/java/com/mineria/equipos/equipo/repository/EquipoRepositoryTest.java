@@ -215,4 +215,22 @@ class EquipoRepositoryTest {
         assertThat(repository.existsById(equipo.getId())).isFalse();
         assertThat(jdbc.queryForObject("select count(*) from mantenimiento", Integer.class)).isZero();
     }
+
+    @Test
+    @DisplayName("el tipo no se puede cambiar: aunque se llame al setter, el UPDATE no toca tipo_id")
+    void elTipoNoSeActualiza() {
+        // Arrange
+        Equipo guardado = repository.saveAndFlush(nuevo("CAM-020", 1L, "10.0"));
+
+        // Act: se intenta pasar el equipo a excavadora y se cambia otro dato para que haya UPDATE
+        guardado.setTipoId(2L);
+        guardado.setHorometro(new BigDecimal("20.0"));
+        repository.saveAndFlush(guardado);
+        entityManager.clear();
+        Equipo recuperado = repository.findById(guardado.getId()).orElseThrow();
+
+        // Assert: el horómetro sí se guardó, el tipo sigue siendo el de origen
+        assertThat(recuperado.getHorometro()).isEqualByComparingTo("20.0");
+        assertThat(recuperado.getTipoId()).isEqualTo(1L);
+    }
 }

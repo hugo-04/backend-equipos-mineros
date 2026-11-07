@@ -36,10 +36,13 @@ import com.mineria.equipos.equipo.policy.IntervaloMantenimientoPolicy;
 import com.mineria.equipos.equipo.repository.EquipoRepository;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.EquipoUpdateRequest;
 import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.shared.exception.HorometroInvalidoException;
+import com.mineria.equipos.shared.exception.HorometroNoPuedeBajarException;
 import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
+import com.mineria.equipos.shared.exception.TipoNoModificableException;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.tipo.service.TipoService;
 
@@ -64,6 +67,10 @@ class EquipoServiceImplTest {
         ReflectionTestUtils.setField(mapper, "mantenimientoPolicy", new IntervaloMantenimientoPolicy());
         Clock reloj = Clock.fixed(Datos.AHORA, ZoneOffset.UTC);
         service = new EquipoServiceImpl(repository, mapper, tipoService, reloj);
+    }
+
+    private EquipoUpdateRequest actualizacion(String codigo, String horometro) {
+        return new EquipoUpdateRequest(codigo, new BigDecimal(horometro));
     }
 
     private EquipoRequest request(String codigo, long tipoId, String horometro) {
@@ -233,7 +240,7 @@ class EquipoServiceImplTest {
                 .thenReturn(Optional.of(Datos.equipoProjection(3L, "CAM-003", "200.0", "0", 250)));
 
         // Act
-        EquipoResponse resultado = service.actualizar(3L, request("CAM-003", 1L, "200.0"));
+        EquipoResponse resultado = service.actualizar(3L, actualizacion("CAM-003", "200.0"));
 
         // Assert
         assertThat(resultado.getHorometro()).isEqualByComparingTo("200.0");
@@ -242,21 +249,21 @@ class EquipoServiceImplTest {
     }
 
     @Test
-    @DisplayName("actualizar: cambia código y tipo sin tocar el ciclo de mantenimiento ni la fecha de creación")
-    void actualizaCodigoYTipoSinTocarElCiclo() {
+    @DisplayName("actualizar: cambia código y horómetro sin tocar el tipo, el ciclo de mantenimiento ni la fecha de creación")
+    void actualizaCodigoYHorometroSinTocarNada() {
         // Arrange
         Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
         existente.setHorometroUltimoMant(new BigDecimal("40.0"));
         when(repository.findById(3L)).thenReturn(Optional.of(existente));
         when(repository.buscarProyeccionPorId(3L))
-                .thenReturn(Optional.of(Datos.equipoProjection(3L, "EXC-009", "150.0", "40.0", 500)));
+                .thenReturn(Optional.of(Datos.equipoProjection(3L, "CAM-009", "150.0", "40.0", 250)));
 
         // Act
-        service.actualizar(3L, request("EXC-009", 2L, "150.0"));
+        service.actualizar(3L, actualizacion("CAM-009", "150.0"));
 
         // Assert
-        assertThat(existente.getCodigo()).isEqualTo("EXC-009");
-        assertThat(existente.getTipoId()).isEqualTo(2L);
+        assertThat(existente.getCodigo()).isEqualTo("CAM-009");
+        assertThat(existente.getTipoId()).isEqualTo(1L);
         assertThat(existente.getHorometro()).isEqualByComparingTo("150.0");
         assertThat(existente.getHorometroUltimoMant()).isEqualByComparingTo("40.0");
         assertThat(existente.getCreadoEn()).isEqualTo(Datos.AHORA);
@@ -273,7 +280,7 @@ class EquipoServiceImplTest {
                 .thenReturn(Optional.of(Datos.equipoProjection(3L, "CAM-003", "100.0", "0", 250)));
 
         // Act + Assert
-        assertThatCode(() -> service.actualizar(3L, request("CAM-003", 1L, "100.0"))).doesNotThrowAnyException();
+        assertThatCode(() -> service.actualizar(3L, actualizacion("CAM-003", "100.0"))).doesNotThrowAnyException();
         verify(repository).saveAndFlush(existente);
     }
 
@@ -285,7 +292,7 @@ class EquipoServiceImplTest {
         when(repository.findById(3L)).thenReturn(Optional.of(existente));
 
         // Act + Assert
-        assertThatThrownBy(() -> service.actualizar(3L, request("CAM-003", 1L, "-1")))
+        assertThatThrownBy(() -> service.actualizar(3L, actualizacion("CAM-003", "-1")))
                 .isInstanceOf(HorometroInvalidoException.class)
                 .hasMessageContaining("mayor o igual a 0");
         verify(repository, never()).saveAndFlush(any());
@@ -298,35 +305,57 @@ class EquipoServiceImplTest {
         when(repository.findById(9L)).thenReturn(Optional.empty());
 
         // Act + Assert
-        assertThatThrownBy(() -> service.actualizar(9L, request("CAM-009", 1L, "10")))
+        assertThatThrownBy(() -> service.actualizar(9L, actualizacion("CAM-009", "10")))
                 .isInstanceOf(EquipoNotFoundException.class);
     }
 
     @Test
-    @DisplayName("actualizar: falla con TipoEquipoNotFoundException si el tipo no existe")
-    void actualizarTipoInexistente() {
-        // Arrange
-        when(repository.findById(3L)).thenReturn(Optional.of(Datos.equipo(3L, "CAM-003", "100.0")));
-        doThrow(new TipoEquipoNotFoundException(77L)).when(tipoService).verificarExiste(77L);
-
-        // Act + Assert
-        assertThatThrownBy(() -> service.actualizar(3L, request("CAM-003", 77L, "10")))
-                .isInstanceOf(TipoEquipoNotFoundException.class);
-    }
-
-    @Test
-    @DisplayName("actualizar: falla con HorometroInvalidoException si se intenta bajar el horómetro")
+    @DisplayName("actualizar: falla con HorometroNoPuedeBajarException si se intenta bajar el horómetro")
     void noPermiteBajarElHorometro() {
         // Arrange
         Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
         when(repository.findById(3L)).thenReturn(Optional.of(existente));
 
         // Act + Assert
-        assertThatThrownBy(() -> service.actualizar(3L, request("CAM-003", 1L, "99.9")))
-                .isInstanceOf(HorometroInvalidoException.class)
-                .hasMessageContaining("no puede bajar");
+        assertThatThrownBy(() -> service.actualizar(3L, actualizacion("CAM-003", "99.9")))
+                .isInstanceOf(HorometroNoPuedeBajarException.class)
+                .hasMessageContaining("no puede bajar")
+                .extracting(e -> ((HorometroNoPuedeBajarException) e).getCodigo())
+                .isEqualTo("HOROMETRO_NO_PUEDE_BAJAR");
         verify(repository, never()).saveAndFlush(any());
         assertThat(existente.getHorometro()).isEqualByComparingTo("100.0");
+    }
+
+    @Test
+    @DisplayName("actualizar: falla con TipoNoModificableException si se pide un tipo distinto y no toca el equipo")
+    void noPermiteCambiarElTipo() {
+        // Arrange: el equipo es de tipo 1 (Camión) y alguien pide el 2 (Excavadora)
+        Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
+        when(repository.findById(3L)).thenReturn(Optional.of(existente));
+
+        // Act + Assert
+        assertThatThrownBy(() -> service.actualizar(3L, actualizacion("EXC-009", "500.0"), 2L))
+                .isInstanceOf(TipoNoModificableException.class)
+                .extracting(e -> ((TipoNoModificableException) e).getCodigo())
+                .isEqualTo("TIPO_NO_MODIFICABLE");
+        verify(repository, never()).saveAndFlush(any());
+        assertThat(existente.getTipoId()).isEqualTo(1L);
+        assertThat(existente.getCodigo()).isEqualTo("CAM-003");
+        assertThat(existente.getHorometro()).isEqualByComparingTo("100.0");
+    }
+
+    @Test
+    @DisplayName("actualizar: pedir el mismo tipo que ya tiene no es un cambio y se acepta")
+    void mismoTipoNoEsCambio() {
+        // Arrange
+        Equipo existente = Datos.equipo(3L, "CAM-003", "100.0");
+        when(repository.findById(3L)).thenReturn(Optional.of(existente));
+        when(repository.buscarProyeccionPorId(3L))
+                .thenReturn(Optional.of(Datos.equipoProjection(3L, "CAM-003", "120.0", "0", 250)));
+
+        // Act + Assert
+        assertThatCode(() -> service.actualizar(3L, actualizacion("CAM-003", "120.0"), 1L)).doesNotThrowAnyException();
+        verify(repository).saveAndFlush(existente);
     }
 
     @Test
@@ -338,7 +367,7 @@ class EquipoServiceImplTest {
         when(repository.existsByCodigoAndIdNot("CAM-001", 3L)).thenReturn(true);
 
         // Act + Assert
-        assertThatThrownBy(() -> service.actualizar(3L, request("CAM-001", 1L, "100.0")))
+        assertThatThrownBy(() -> service.actualizar(3L, actualizacion("CAM-001", "100.0")))
                 .isInstanceOf(CodigoDuplicadoException.class);
         verify(repository, never()).saveAndFlush(any());
         assertThat(existente.getCodigo()).isEqualTo("CAM-003");
@@ -351,7 +380,7 @@ class EquipoServiceImplTest {
         when(repository.findById(3L)).thenThrow(new IllegalStateException("BD caída"));
 
         // Act + Assert
-        assertThatThrownBy(() -> service.actualizar(3L, request("CAM-003", 1L, "10")))
+        assertThatThrownBy(() -> service.actualizar(3L, actualizacion("CAM-003", "10")))
                 .isInstanceOf(IllegalStateException.class);
     }
 

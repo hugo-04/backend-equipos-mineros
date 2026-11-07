@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.EquipoUpdateRequest;
 import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 
 /**
@@ -20,7 +21,22 @@ public interface EquipoService {
 
     EquipoResponse crear(EquipoRequest request);
 
-    EquipoResponse actualizar(Long id, EquipoRequest request);
+    /** Edita código y horómetro. El tipo no se puede cambiar: ver {@link #actualizar(Long, EquipoUpdateRequest, Long)}. */
+    default EquipoResponse actualizar(Long id, EquipoUpdateRequest request) {
+        return actualizar(id, request, null);
+    }
+
+    /**
+     * Igual que la anterior, pero con el tipo que alguien quiso poner (si lo hubo). La API nunca lo manda porque
+     * el contrato lo rechaza con 400; este parámetro es la segunda defensa, por si otro código intenta cambiarlo.
+     * Mandar el mismo tipo que ya tiene el equipo no es un cambio y se acepta.
+     *
+     * @param tipoIdSolicitado el tipo que se quiso asignar, o null si no se tocó
+     * @throws com.mineria.equipos.shared.exception.TipoNoModificableException si es distinto al tipo actual
+     * @throws com.mineria.equipos.shared.exception.HorometroNoPuedeBajarException si el horómetro es menor al actual
+     * @throws com.mineria.equipos.shared.exception.CodigoDuplicadoException si el código ya es de otro equipo
+     */
+    EquipoResponse actualizar(Long id, EquipoUpdateRequest request, Long tipoIdSolicitado);
 
     void eliminar(Long id);
 

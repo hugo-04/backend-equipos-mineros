@@ -1,5 +1,6 @@
 package com.mineria.equipos.equipo.mapper;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.mapstruct.Mapper;
@@ -15,6 +16,7 @@ import com.mineria.equipos.equipo.policy.MantenimientoPolicy;
 import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.EquipoUpdateRequest;
 import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 import com.mineria.equipos.shared.pagination.MapeoDePagina;
 
@@ -33,6 +35,8 @@ public abstract class EquipoMapper {
     @Mapping(target = "tipo.id", source = "tipoId")
     @Mapping(target = "tipo.nombre", source = "tipoNombre")
     @Mapping(target = "tipo.intervaloHoras", source = "intervaloHoras")
+    @Mapping(target = "horasDesdeUltimoMant", source = ".", qualifiedByName = "horasDesdeUltimoMant")
+    @Mapping(target = "horasRestantes", source = ".", qualifiedByName = "horasRestantes")
     @Mapping(target = "requiereMantenimiento", source = ".", qualifiedByName = "requiereMantenimiento")
     @Mapping(target = "estado", source = ".", qualifiedByName = "estadoLegible")
     public abstract EquipoResponse toResponse(EquipoProjection proyeccion);
@@ -48,11 +52,23 @@ public abstract class EquipoMapper {
     @Mapping(target = "creadoEn", ignore = true)
     public abstract Equipo toEntity(EquipoRequest request);
 
-    // Al editar solo se copian código, tipo y horómetro; el id, el ciclo y la fecha de creación se quedan como estaban
+    // Al editar solo se copian código y horómetro. El tipo es inmutable, y el id, el ciclo y la fecha de creación
+    // se quedan como estaban.
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "tipoId", ignore = true)
     @Mapping(target = "horometroUltimoMant", ignore = true)
     @Mapping(target = "creadoEn", ignore = true)
-    public abstract void actualizar(EquipoRequest request, @MappingTarget Equipo equipo);
+    public abstract void actualizar(EquipoUpdateRequest request, @MappingTarget Equipo equipo);
+
+    @Named("horasDesdeUltimoMant")
+    protected BigDecimal horasDesdeUltimoMant(EquipoProjection p) {
+        return mantenimientoPolicy.horasDesdeUltimoMant(p.getHorometro(), p.getHorometroUltimoMant());
+    }
+
+    @Named("horasRestantes")
+    protected BigDecimal horasRestantes(EquipoProjection p) {
+        return mantenimientoPolicy.horasRestantes(p.getHorometro(), p.getHorometroUltimoMant(), p.getIntervaloHoras());
+    }
 
     @Named("requiereMantenimiento")
     protected boolean requiereMantenimiento(EquipoProjection p) {

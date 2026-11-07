@@ -68,7 +68,7 @@ class FlujoCompletoIntegrationTest {
         // al llegar a 250 h exactas ya requiere mantenimiento
         mockMvc.perform(put("/equipos/" + id).header(HttpHeaders.AUTHORIZATION, bearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"codigo\":\"CAM-INT-1\",\"tipoId\":1,\"horometro\":250.0}"))
+                        .content("{\"codigo\":\"CAM-INT-1\",\"horometro\":250.0}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.requiereMantenimiento").value(true))
                 .andExpect(jsonPath("$.estado").value("Requiere mantenimiento"));
@@ -76,9 +76,9 @@ class FlujoCompletoIntegrationTest {
         // no se puede bajar el horómetro
         mockMvc.perform(put("/equipos/" + id).header(HttpHeaders.AUTHORIZATION, bearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"codigo\":\"CAM-INT-1\",\"tipoId\":1,\"horometro\":100.0}"))
+                        .content("{\"codigo\":\"CAM-INT-1\",\"horometro\":100.0}"))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.code").value("HOROMETRO_INVALIDO"));
+                .andExpect(jsonPath("$.code").value("HOROMETRO_NO_PUEDE_BAJAR"));
 
         // registrar el mantenimiento guarda el horómetro actual y reinicia el ciclo
         mockMvc.perform(post("/equipos/" + id + "/mantenimientos").header(HttpHeaders.AUTHORIZATION, bearer)
@@ -98,7 +98,7 @@ class FlujoCompletoIntegrationTest {
         // el nuevo ciclo vuelve a vencer 250 h después del mantenimiento
         mockMvc.perform(put("/equipos/" + id).header(HttpHeaders.AUTHORIZATION, bearer)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"codigo\":\"CAM-INT-1\",\"tipoId\":1,\"horometro\":500.0}"))
+                        .content("{\"codigo\":\"CAM-INT-1\",\"horometro\":500.0}"))
                 .andExpect(jsonPath("$.requiereMantenimiento").value(true));
 
         // eliminar el equipo borra también su historial

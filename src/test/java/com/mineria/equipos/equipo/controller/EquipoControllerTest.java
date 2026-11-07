@@ -35,9 +35,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.EquipoUpdateRequest;
 import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
-import com.mineria.equipos.shared.exception.HorometroInvalidoException;
+import com.mineria.equipos.shared.exception.HorometroNoPuedeBajarException;
+import com.mineria.equipos.shared.exception.TipoNoModificableException;
 import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
 import com.mineria.equipos.auth.entity.Rol;
 import com.mineria.equipos.testsupport.ControllerTest;
@@ -53,6 +55,10 @@ class EquipoControllerTest {
 
     private static final String BODY_VALIDO = """
             {"codigo":"CAM-001","tipoId":1,"horometro":120.5}""";
+
+    // Al editar solo viajan código y horómetro: el tipo no se puede cambiar
+    private static final String BODY_EDICION = """
+            {"codigo":"CAM-001","horometro":120.5}""";
 
     @Autowired
     private MockMvc mockMvc;
@@ -361,10 +367,10 @@ class EquipoControllerTest {
 
         // Act + Assert
         mockMvc.perform(put("/equipos/4").header(HttpHeaders.AUTHORIZATION, operador())
-                        .contentType(MediaType.APPLICATION_JSON).content(BODY_VALIDO))
+                        .contentType(MediaType.APPLICATION_JSON).content(BODY_EDICION))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(4));
-        ArgumentCaptor<EquipoRequest> request = ArgumentCaptor.forClass(EquipoRequest.class);
+        ArgumentCaptor<EquipoUpdateRequest> request = ArgumentCaptor.forClass(EquipoUpdateRequest.class);
         verify(equipoService).actualizar(eq(4L), request.capture());
         assertThat(request.getValue().getCodigo()).isEqualTo("CAM-001");
     }
@@ -373,14 +379,14 @@ class EquipoControllerTest {
     @DisplayName("PUT /equipos/{id}: 422 si el horómetro baja")
     void actualizarBajandoHorometro() throws Exception {
         // Arrange
-        when(equipoService.actualizar(any(), any())).thenThrow(new HorometroInvalidoException("El horómetro no puede bajar"));
+        when(equipoService.actualizar(any(), any())).thenThrow(new HorometroNoPuedeBajarException(new BigDecimal("100.0"), new BigDecimal("90.0")));
 
         // Act + Assert
         mockMvc.perform(put("/equipos/4").header(HttpHeaders.AUTHORIZATION, admin())
-                        .contentType(MediaType.APPLICATION_JSON).content(BODY_VALIDO))
+                        .contentType(MediaType.APPLICATION_JSON).content(BODY_EDICION))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.status").value(422))
-                .andExpect(jsonPath("$.code").value("HOROMETRO_INVALIDO"));
+                .andExpect(jsonPath("$.code").value("HOROMETRO_NO_PUEDE_BAJAR"));
     }
 
     @Test
@@ -391,8 +397,58 @@ class EquipoControllerTest {
 
         // Act + Assert
         mockMvc.perform(put("/equipos/4").header(HttpHeaders.AUTHORIZATION, admin())
-                        .contentType(MediaType.APPLICATION_JSON).content(BODY_VALIDO))
+                        .contentType(MediaType.APPLICATION_JSON).content(BODY_EDICION))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /equipos/{id}: 400 si el cuerpo trae tipoId, porque el tipo no se puede cambiar")
+    void actualizarConTipoIdEsRechazado() throws Exception {
+        // Act + Assert
+        mockMvc.perform(put("/equipos/4").header(HttpHeaders.AUTHORIZATION, admin())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"codigo":"CAM-001","tipoId":2,"horometro":120.5}"""))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("PROPIEDAD_DESCONOCIDA"));
+        verify(equipoService, never()).actualizar(any(), any());
+    }
+
+    @Test
+    @DisplayName("PUT /equipos/{id}: 400 si falta el horómetro")
+    void actualizarSinHorometro() throws Exception {
+        // Act + Assert
+        mockMvc.perform(put("/equipos/4").header(HttpHeaders.AUTHORIZATION, admin())
+                        .contentType(MediaType.APPLICATION_JSON).content("""
+                                {"codigo":"CAM-001"}"""))
+                .andExpect(status().isBadRequest());
+        verify(equipoService, never()).actualizar(any(), any());
+    }
+
+    @Test
+    @DisplayName("PUT /equipos/{id}: 409 si el código ya es de otro equipo")
+    void actualizarCodigoDuplicado() throws Exception {
+        // Arrange
+        when(equipoService.actualizar(any(), any())).thenThrow(new CodigoDuplicadoException("CAM-001"));
+
+        // Act + Assert
+        mockMvc.perform(put("/equipos/4").header(HttpHeaders.AUTHORIZATION, admin())
+                        .contentType(MediaType.APPLICATION_JSON).content(BODY_EDICION))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CODIGO_DUPLICADO"));
+    }
+
+    @Test
+    @DisplayName("PUT /equipos/{id}: 422 TIPO_NO_MODIFICABLE si el servicio rechaza un cambio de tipo")
+    void actualizarTipoNoModificable() throws Exception {
+        // Arrange
+        when(equipoService.actualizar(any(), any())).thenThrow(new TipoNoModificableException());
+
+        // Act + Assert
+        mockMvc.perform(put("/equipos/4").header(HttpHeaders.AUTHORIZATION, admin())
+                        .contentType(MediaType.APPLICATION_JSON).content(BODY_EDICION))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.code").value("TIPO_NO_MODIFICABLE"));
     }
 
     // DELETE

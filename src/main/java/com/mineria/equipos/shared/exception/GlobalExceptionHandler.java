@@ -27,7 +27,6 @@ import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
 import com.mineria.equipos.shared.exception.DomainException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
-import com.mineria.equipos.shared.exception.HorometroInvalidoException;
 import com.mineria.equipos.shared.exception.TipoEquipoNotFoundException;
 import com.mineria.equipos.generated.model.ErrorDetail;
 import com.mineria.equipos.generated.model.ErrorResponse;
@@ -74,9 +73,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return responder(HttpStatus.CONFLICT, ex.getCodigo(), ex.getMessage(), request);
     }
 
-    @ExceptionHandler(HorometroInvalidoException.class)
-    public ResponseEntity<ErrorResponse> handleHorometroInvalido(HorometroInvalidoException ex,
-                                                                HttpServletRequest request) {
+    // Reglas de negocio que la petición rompe aunque esté bien formada: 422
+    @ExceptionHandler({HorometroInvalidoException.class, HorometroNoPuedeBajarException.class,
+            TipoNoModificableException.class})
+    public ResponseEntity<ErrorResponse> handleReglaDeNegocio(DomainException ex, HttpServletRequest request) {
         return responder(HttpStatus.UNPROCESSABLE_ENTITY, ex.getCodigo(), ex.getMessage(), request);
     }
 

@@ -154,4 +154,28 @@ class ReglaMantenimientoTest {
         equipo.setHorometroUltimoMant(BigDecimal.ZERO);
         return equipo;
     }
+
+    @ParameterizedTest(name = "horómetro {0}, último mant. {1}: desde={2}, restantes={3}")
+    @CsvSource({
+            "100.0, 0.0, 100.0, 150.0",
+            "249.9, 0.0, 249.9, 0.1",
+            "250.0, 0.0, 250.0, 0.0",
+            "260.0, 0.0, 260.0, 0.0",
+            "260.0, 260.0, 0.0, 250.0",
+            "510.0, 260.0, 250.0, 0.0"})
+    @DisplayName("horasDesdeUltimoMant y horasRestantes: nunca negativas y el ciclo se cuenta desde el último mantenimiento")
+    void horasDesdeYRestantes(String horometro, String ultimoMant, String desde, String restantes) {
+        // Arrange
+        BigDecimal h = new BigDecimal(horometro);
+        BigDecimal u = new BigDecimal(ultimoMant);
+
+        // Act
+        BigDecimal horasDesde = policy.horasDesdeUltimoMant(h, u);
+        BigDecimal horasRestantes = policy.horasRestantes(h, u, INTERVALO_CAMION);
+
+        // Assert
+        assertThat(horasDesde).isEqualByComparingTo(desde);
+        assertThat(horasRestantes).isEqualByComparingTo(restantes);
+        assertThat(horasRestantes.signum()).isGreaterThanOrEqualTo(0);
+    }
 }

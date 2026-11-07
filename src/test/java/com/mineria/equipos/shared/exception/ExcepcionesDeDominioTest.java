@@ -20,6 +20,9 @@ class ExcepcionesDeDominioTest {
                 Arguments.of(new TipoEquipoNotFoundException(4L), "TIPO_EQUIPO_NO_ENCONTRADO", "id 4"),
                 Arguments.of(new CodigoDuplicadoException("CAM-001"), "CODIGO_DUPLICADO", "CAM-001"),
                 Arguments.of(new HorometroInvalidoException("no puede bajar"), "HOROMETRO_INVALIDO", "no puede bajar"),
+                Arguments.of(new HorometroNoPuedeBajarException(new java.math.BigDecimal("100.0"),
+                        new java.math.BigDecimal("90.0")), "HOROMETRO_NO_PUEDE_BAJAR", "actual 100.0, recibido 90.0"),
+                Arguments.of(new TipoNoModificableException(), "TIPO_NO_MODIFICABLE", "no se puede cambiar"),
                 Arguments.of(new CredencialesInvalidasException(), "CREDENCIALES_INVALIDAS", "incorrectos"));
     }
 

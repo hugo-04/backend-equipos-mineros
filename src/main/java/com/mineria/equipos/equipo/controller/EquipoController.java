@@ -10,6 +10,7 @@ import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.generated.api.EquiposApi;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.EquipoUpdateRequest;
 import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 import com.mineria.equipos.shared.pagination.Paginacion;
 
@@ -41,8 +42,8 @@ public class EquipoController implements EquiposApi {
     }
 
     @Override
-    public ResponseEntity<EquipoResponse> actualizarEquipo(Long id, EquipoRequest equipoRequest) {
-        return ResponseEntity.ok(equipoService.actualizar(id, equipoRequest));
+    public ResponseEntity<EquipoResponse> actualizarEquipo(Long id, EquipoUpdateRequest equipoUpdateRequest) {
+        return ResponseEntity.ok(equipoService.actualizar(id, equipoUpdateRequest));
     }
 
     @Override

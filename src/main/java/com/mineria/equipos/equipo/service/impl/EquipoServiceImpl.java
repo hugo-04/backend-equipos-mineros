@@ -16,19 +16,22 @@ import com.mineria.equipos.equipo.repository.EquipoRepository;
 import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
+import com.mineria.equipos.generated.model.EquipoUpdateRequest;
 import com.mineria.equipos.generated.model.PaginaEquipoResponse;
 import com.mineria.equipos.shared.exception.CodigoDuplicadoException;
 import com.mineria.equipos.shared.exception.DomainException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.shared.exception.HorometroInvalidoException;
+import com.mineria.equipos.shared.exception.HorometroNoPuedeBajarException;
+import com.mineria.equipos.shared.exception.TipoNoModificableException;
 import com.mineria.equipos.tipo.service.TipoService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Acá están las reglas de negocio del equipo: el horómetro no puede ser negativo ni bajar, el ciclo de
- * mantenimiento arranca en 0 y se reinicia al registrar un mantenimiento, y el código no se repite. La
+ * Acá están las reglas de negocio del equipo: el horómetro no puede ser negativo ni bajar, el tipo no se
+ * cambia, el ciclo de mantenimiento arranca en 0 y se reinicia al registrar un mantenimiento, y el código no se repite. La
  * entidad solo guarda datos, y la regla de "requiere mantenimiento" está en la política. Para saber si un
  * tipo existe le pregunta a {@link TipoService}, nunca al repositorio del módulo tipo.
  */
@@ -86,13 +89,18 @@ public class EquipoServiceImpl implements EquipoService {
 
     @Override
     @Transactional
-    public EquipoResponse actualizar(Long id, EquipoRequest request) {
+    public EquipoResponse actualizar(Long id, EquipoUpdateRequest request, Long tipoIdSolicitado) {
         try {
             Equipo equipo = repository.findById(id).orElseThrow(() -> new EquipoNotFoundException(id));
-            tipoService.verificarExiste(request.getTipoId());
 
-            // El horómetro no se deja bajar: si alguien lo corrige a la baja, el ciclo de mantenimiento se rompería.
-            // Se valida antes de tocar la entidad.
+            // El tipo no se cambia: el estado y los mantenimientos se rigen por el intervalo del tipo con que
+            // nació el equipo. Se rechaza antes de tocar nada.
+            if (tipoIdSolicitado != null && !tipoIdSolicitado.equals(equipo.getTipoId())) {
+                throw new TipoNoModificableException();
+            }
+
+            // El horómetro no se deja bajar: es un acumulado de horas de uso, como el odómetro de un auto. Lo que
+            // se reinicia es el ciclo de mantenimiento, no el horómetro. Se valida antes de tocar la entidad.
             validarHorometroNoBaja(equipo.getHorometro(), request.getHorometro());
 
             if (repository.existsByCodigoAndIdNot(request.getCodigo(), id)) {
@@ -159,8 +167,7 @@ public class EquipoServiceImpl implements EquipoService {
     private void validarHorometroNoBaja(BigDecimal actual, BigDecimal nuevo) {
         validarHorometroNoNegativo(nuevo);
         if (nuevo.compareTo(actual) < 0) {
-            throw new HorometroInvalidoException(
-                    "El horómetro no puede bajar: actual " + actual + ", recibido " + nuevo);
+            throw new HorometroNoPuedeBajarException(actual, nuevo);
         }
     }
 

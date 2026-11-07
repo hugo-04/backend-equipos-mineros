@@ -75,7 +75,8 @@ public final class Datos {
 
     public static EquipoResponse equipoResponse(Long id, String codigo, boolean requiere) {
         return new EquipoResponse(id, codigo, new TipoEquipoResponse(1L, "Camión", 250), new BigDecimal("300.0"),
-                BigDecimal.ZERO, requiere, requiere ? "Requiere mantenimiento" : "OK", AHORA);
+                BigDecimal.ZERO, new BigDecimal("300.0"), requiere ? BigDecimal.ZERO : new BigDecimal("50.0"),
+                requiere, requiere ? "Requiere mantenimiento" : "OK", AHORA);
     }
 
     public static MantenimientoProjection mantenimientoProjection(Long id, Long equipoId, String horometro) {

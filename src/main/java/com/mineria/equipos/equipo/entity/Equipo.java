@@ -32,7 +32,9 @@ public class Equipo {
     @Column(nullable = false, length = 30)
     private String codigo;
 
-    @Column(name = "tipo_id", nullable = false)
+    // updatable = false: el tipo no cambia nunca después de crear el equipo. Así, aunque algún código llame al
+    // setter, Hibernate no incluye tipo_id en el UPDATE.
+    @Column(name = "tipo_id", nullable = false, updatable = false)
     private Long tipoId;
 
     @Column(nullable = false, precision = 10, scale = 1)
