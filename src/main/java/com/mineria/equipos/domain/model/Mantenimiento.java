@@ -20,12 +20,12 @@ public class Mantenimiento {
     BigDecimal horometroAlRegistrar;
     String notas;
 
-    /** Factory: arma el mantenimiento a partir del estado actual del equipo. */
-    public static Mantenimiento registrarPara(Equipo equipo, String notas, Instant fecha) {
+    /** Factory: arma el mantenimiento con el horómetro que tenía el equipo al registrarlo. */
+    public static Mantenimiento registrarPara(Long equipoId, BigDecimal horometro, String notas, Instant fecha) {
         return Mantenimiento.builder()
-                .equipoId(equipo.getId())
+                .equipoId(equipoId)
                 .fecha(fecha)
-                .horometroAlRegistrar(equipo.getHorometro())
+                .horometroAlRegistrar(horometro)
                 .notas(notas)
                 .build();
     }

@@ -6,10 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mineria.equipos.application.port.in.ConsultarMantenimientosUseCase;
-import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
+import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.application.port.out.MantenimientoQueryPort;
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,14 +21,12 @@ import lombok.RequiredArgsConstructor;
 @Transactional(readOnly = true)
 public class ConsultarMantenimientosService implements ConsultarMantenimientosUseCase {
 
-    private final EquipoRepositoryPort equipoRepository;
+    private final EquipoService equipoService;
     private final MantenimientoQueryPort mantenimientoQuery;
 
     @Override
     public List<MantenimientoView> listarPorEquipo(Long equipoId) {
-        if (!equipoRepository.existePorId(equipoId)) {
-            throw new EquipoNotFoundException(equipoId);
-        }
+        equipoService.verificarExiste(equipoId);
         return mantenimientoQuery.listarPorEquipo(equipoId);
     }
 }

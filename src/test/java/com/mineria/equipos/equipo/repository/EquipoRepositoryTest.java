@@ -1,0 +1,181 @@
+package com.mineria.equipos.equipo.repository;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.jdbc.core.JdbcTemplate;
+
+import com.mineria.equipos.equipo.entity.Equipo;
+import com.mineria.equipos.equipo.repository.projection.EquipoProjection;
+import com.mineria.equipos.testsupport.Datos;
+import com.mineria.equipos.testsupport.PersistenciaTest;
+
+import jakarta.persistence.EntityManager;
+
+@PersistenciaTest
+class EquipoRepositoryTest {
+
+    @Autowired
+    private EquipoRepository repository;
+    @Autowired
+    private JdbcTemplate jdbc;
+    @Autowired
+    private EntityManager entityManager;
+
+    private Equipo nuevo(String codigo, long tipoId, String horometro) {
+        Equipo equipo = new Equipo();
+        equipo.setCodigo(codigo);
+        equipo.setTipoId(tipoId);
+        equipo.setHorometro(new BigDecimal(horometro));
+        equipo.darDeAlta(Datos.AHORA);
+        return equipo;
+    }
+
+    @Test
+    @DisplayName("guarda un equipo nuevo y lo recupera con sus datos")
+    void guardaYRecupera() {
+        // Arrange
+        Equipo nuevo = nuevo("EXC-001", 2L, "80.5");
+
+        // Act
+        Equipo guardado = repository.saveAndFlush(nuevo);
+        entityManager.clear();
+        Optional<Equipo> recuperado = repository.findById(guardado.getId());
+
+        // Assert
+        assertThat(guardado.getId()).isNotNull();
+        assertThat(recuperado).isPresent();
+        assertThat(recuperado.get().getCodigo()).isEqualTo("EXC-001");
+        assertThat(recuperado.get().getTipoId()).isEqualTo(2L);
+        assertThat(recuperado.get().getHorometroUltimoMant()).isEqualByComparingTo("0");
+        assertThat(recuperado.get().getCreadoEn()).isEqualTo(Datos.AHORA);
+    }
+
+    @Test
+    @DisplayName("actualiza un equipo existente sin tocar su fecha de creación")
+    void actualiza() {
+        // Arrange
+        Equipo guardado = repository.saveAndFlush(nuevo("CAM-010", 1L, "10.0"));
+
+        // Act
+        guardado.actualizar("CAM-010", 1L, new BigDecimal("55.5"));
+        repository.saveAndFlush(guardado);
+        entityManager.clear();
+        Equipo recuperado = repository.findById(guardado.getId()).orElseThrow();
+
+        // Assert
+        assertThat(recuperado.getHorometro()).isEqualByComparingTo("55.5");
+        assertThat(recuperado.getCreadoEn()).isEqualTo(Datos.AHORA);
+    }
+
+    @Test
+    @DisplayName("la lectura devuelve proyecciones con los datos del tipo ya unidos")
+    void listaProyeccionesConElTipo() {
+        // Arrange
+        repository.saveAndFlush(nuevo("CAM-020", 1L, "1.0"));
+        repository.saveAndFlush(nuevo("PER-020", 3L, "2.0"));
+        entityManager.clear();
+
+        // Act
+        List<EquipoProjection> proyecciones = repository.listarProyecciones();
+
+        // Assert
+        assertThat(proyecciones).extracting(EquipoProjection::getCodigo).contains("CAM-020", "PER-020");
+        assertThat(proyecciones).filteredOn(p -> p.getCodigo().equals("PER-020")).singleElement().satisfies(p -> {
+            assertThat(p.getTipoNombre()).isEqualTo("Perforadora");
+            assertThat(p.getIntervaloHoras()).isEqualTo(300);
+            assertThat(p.getTipoId()).isEqualTo(3L);
+        });
+    }
+
+    @Test
+    @DisplayName("buscarProyeccionPorId: devuelve la proyección si existe y vacío si no")
+    void buscarProyeccion() {
+        // Arrange
+        Equipo guardado = repository.saveAndFlush(nuevo("CAM-030", 1L, "3.0"));
+        entityManager.clear();
+
+        // Act
+        Optional<EquipoProjection> existente = repository.buscarProyeccionPorId(guardado.getId());
+        Optional<EquipoProjection> inexistente = repository.buscarProyeccionPorId(987654L);
+
+        // Assert
+        assertThat(existente).isPresent();
+        assertThat(existente.get().getTipoId()).isEqualTo(1L);
+        assertThat(inexistente).isEmpty();
+    }
+
+    @Test
+    @DisplayName("existsById, existsByCodigo y existsByCodigoAndIdNot")
+    void existencias() {
+        // Arrange
+        Equipo a = repository.saveAndFlush(nuevo("CAM-040", 1L, "1"));
+        Equipo b = repository.saveAndFlush(nuevo("CAM-041", 1L, "1"));
+
+        // Act + Assert
+        assertThat(repository.existsById(a.getId())).isTrue();
+        assertThat(repository.existsById(987654L)).isFalse();
+        assertThat(repository.existsByCodigo("CAM-040")).isTrue();
+        assertThat(repository.existsByCodigo("NO-EXISTE")).isFalse();
+        assertThat(repository.existsByCodigoAndIdNot("CAM-040", a.getId())).isFalse();
+        assertThat(repository.existsByCodigoAndIdNot("CAM-040", b.getId())).isTrue();
+    }
+
+    @Test
+    @DisplayName("BD: un código repetido viola la restricción única uk_equipo_codigo")
+    void codigoDuplicado() {
+        // Arrange
+        repository.saveAndFlush(nuevo("CAM-050", 1L, "1"));
+
+        // Act + Assert
+        assertThatThrownBy(() -> repository.saveAndFlush(nuevo("CAM-050", 1L, "1")))
+                .isInstanceOfSatisfying(DataIntegrityViolationException.class, e ->
+                        assertThat(e.getMostSpecificCause().getMessage().toLowerCase()).contains("uk_equipo_codigo"));
+    }
+
+    @Test
+    @DisplayName("BD: un tipo inexistente viola la llave foránea")
+    void tipoInexistente() {
+        // Act + Assert
+        assertThatThrownBy(() -> repository.saveAndFlush(nuevo("FAN-001", 9999L, "1")))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("BD: no deja guardar un horómetro menor al del último mantenimiento")
+    void checkHorometroMayorOIgual() {
+        // Act + Assert
+        assertThatThrownBy(() -> jdbc.update(
+                "insert into equipo (codigo, tipo_id, horometro, horometro_ultimo_mant) values ('BAD-001', 1, 10.0, 20.0)"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("eliminar un equipo borra también su historial (ON DELETE CASCADE)")
+    void eliminarBorraElHistorial() {
+        // Arrange
+        Equipo equipo = repository.saveAndFlush(nuevo("CAM-060", 1L, "300.0"));
+        jdbc.update("insert into mantenimiento (equipo_id, fecha, horometro_al_registrar, notas) "
+                + "values (?, current_timestamp, 300.0, 'Primero')", equipo.getId());
+        jdbc.update("insert into mantenimiento (equipo_id, fecha, horometro_al_registrar, notas) "
+                + "values (?, current_timestamp, 300.0, 'Segundo')", equipo.getId());
+        assertThat(jdbc.queryForObject("select count(*) from mantenimiento", Integer.class)).isEqualTo(2);
+
+        // Act
+        repository.deleteById(equipo.getId());
+        repository.flush();
+        entityManager.clear();
+
+        // Assert
+        assertThat(repository.existsById(equipo.getId())).isFalse();
+        assertThat(jdbc.queryForObject("select count(*) from mantenimiento", Integer.class)).isZero();
+    }
+}

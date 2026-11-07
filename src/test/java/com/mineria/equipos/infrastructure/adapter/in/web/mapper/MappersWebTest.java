@@ -10,84 +10,22 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
-import com.mineria.equipos.application.port.in.ActualizarEquipoUseCase;
 import com.mineria.equipos.application.port.in.AutenticarUsuarioUseCase;
-import com.mineria.equipos.application.port.in.CrearEquipoUseCase;
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
-import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.SesionView;
-import com.mineria.equipos.generated.model.EquipoRequest;
-import com.mineria.equipos.generated.model.EquipoResponse;
 import com.mineria.equipos.generated.model.LoginRequest;
 import com.mineria.equipos.generated.model.LoginResponse;
 import com.mineria.equipos.generated.model.MantenimientoRequest;
 import com.mineria.equipos.generated.model.MantenimientoResponse;
 import com.mineria.equipos.testsupport.Datos;
 
-@SpringJUnitConfig({EquipoWebMapperImpl.class, MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class})
+@SpringJUnitConfig({MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class})
 class MappersWebTest {
 
-    @Autowired
-    private EquipoWebMapper equipoMapper;
     @Autowired
     private MantenimientoWebMapper mantenimientoMapper;
     @Autowired
     private AuthWebMapper authMapper;
-
-    @Test
-    @DisplayName("equipo: el request se convierte en el comando de crear")
-    void requestAComandoDeCrear() {
-        // Arrange
-        EquipoRequest request = new EquipoRequest("CAM-001", 1L, new BigDecimal("12.5"));
-
-        // Act
-        CrearEquipoUseCase.Comando comando = equipoMapper.toCrearComando(request);
-
-        // Assert
-        assertThat(comando).isEqualTo(new CrearEquipoUseCase.Comando("CAM-001", 1L, new BigDecimal("12.5")));
-    }
-
-    @Test
-    @DisplayName("equipo: el id del path y el body forman el comando de actualizar")
-    void requestAComandoDeActualizar() {
-        // Arrange
-        EquipoRequest request = new EquipoRequest("CAM-001", 2L, new BigDecimal("99.0"));
-
-        // Act
-        ActualizarEquipoUseCase.Comando comando = equipoMapper.toActualizarComando(7L, request);
-
-        // Assert
-        assertThat(comando).isEqualTo(new ActualizarEquipoUseCase.Comando(7L, "CAM-001", 2L, new BigDecimal("99.0")));
-    }
-
-    @Test
-    @DisplayName("equipo: actualizar acepta solo el id o solo el body sin romperse")
-    void actualizarConPartesNulas() {
-        // Act + Assert
-        assertThat(equipoMapper.toActualizarComando(null, null)).isNull();
-        assertThat(equipoMapper.toActualizarComando(3L, null).id()).isEqualTo(3L);
-        assertThat(equipoMapper.toActualizarComando(null, new EquipoRequest("A-1", 1L, BigDecimal.ONE)).codigo())
-                .isEqualTo("A-1");
-    }
-
-    @Test
-    @DisplayName("equipo: el view aplanado se expone con el objeto 'tipo' anidado")
-    void viewAResponseConTipoAnidado() {
-        // Arrange
-        EquipoView view = Datos.equipoView(5L, "CAM-005", "260.0", "0", 250).toBuilder()
-                .requiereMantenimiento(true).estado("Requiere mantenimiento").build();
-
-        // Act
-        EquipoResponse response = equipoMapper.toResponse(view);
-
-        // Assert
-        assertThat(response.getTipo().getId()).isEqualTo(1L);
-        assertThat(response.getTipo().getNombre()).isEqualTo("Camión");
-        assertThat(response.getTipo().getIntervaloHoras()).isEqualTo(250);
-        assertThat(response.getRequiereMantenimiento()).isTrue();
-        assertThat(response.getEstado()).isEqualTo("Requiere mantenimiento");
-        assertThat(response.getCreadoEn()).isEqualTo(Datos.AHORA);
-    }
 
     @Test
     @DisplayName("mantenimiento: arma el comando con el id del equipo y las notas")
@@ -141,9 +79,6 @@ class MappersWebTest {
     @DisplayName("todos los mappers web devuelven null (o lista vacía) cuando reciben null")
     void nulos() {
         // Act + Assert
-        assertThat(equipoMapper.toCrearComando(null)).isNull();
-        assertThat(equipoMapper.toResponse(null)).isNull();
-        assertThat(equipoMapper.toResponses(null)).isNull();
         assertThat(mantenimientoMapper.toResponse(null)).isNull();
         assertThat(mantenimientoMapper.toResponses(null)).isNull();
         assertThat(authMapper.toComando(null)).isNull();

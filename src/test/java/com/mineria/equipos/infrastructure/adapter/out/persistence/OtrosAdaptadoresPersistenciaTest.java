@@ -1,7 +1,6 @@
 package com.mineria.equipos.infrastructure.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -11,39 +10,41 @@ import java.util.Optional;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.domain.model.Equipo;
+import com.mineria.equipos.equipo.entity.Equipo;
+import com.mineria.equipos.equipo.repository.EquipoRepository;
 import com.mineria.equipos.domain.model.Mantenimiento;
 import com.mineria.equipos.domain.model.Rol;
-import com.mineria.equipos.domain.model.TipoEquipo;
 import com.mineria.equipos.domain.model.Usuario;
 import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.PersistenciaTest;
 
-/** Adaptadores de tipos, mantenimientos y usuarios, más las restricciones que definen las migraciones. */
+/** Adaptadores de mantenimientos y usuarios (transitorio: pasan a repositorios en los siguientes módulos). */
 @PersistenciaTest
 class OtrosAdaptadoresPersistenciaTest {
 
     @Autowired
-    private TipoEquipoPersistenceAdapter tipos;
-    @Autowired
-    private EquipoPersistenceAdapter equipos;
+    private EquipoRepository equipos;
     @Autowired
     private MantenimientoPersistenceAdapter mantenimientos;
     @Autowired
     private UsuarioPersistenceAdapter usuarios;
-    @Autowired
-    private JdbcTemplate jdbc;
+
+    private Equipo nuevoEquipo(String codigo, String horometro) {
+        Equipo equipo = new Equipo();
+        equipo.setCodigo(codigo);
+        equipo.setTipoId(1L);
+        equipo.setHorometro(new BigDecimal(horometro));
+        equipo.darDeAlta(Datos.AHORA);
+        return equipo;
+    }
 
     @Test
     @DisplayName("mantenimientos: el historial sale del más reciente al más antiguo")
     void historialOrdenado() {
         // Arrange
-        Equipo equipo = equipos.guardar(Equipo.nuevo("CAM-070", tipos.buscarPorId(1L).orElseThrow(),
-                new BigDecimal("500.0"), Datos.AHORA));
+        Equipo equipo = equipos.saveAndFlush(nuevoEquipo("CAM-070", "500.0"));
         mantenimientos.guardar(Mantenimiento.builder().equipoId(equipo.getId())
                 .fecha(Instant.parse("2026-01-01T00:00:00Z")).horometroAlRegistrar(new BigDecimal("250.0")).notas("Viejo").build());
         mantenimientos.guardar(Mantenimiento.builder().equipoId(equipo.getId())
@@ -61,9 +62,9 @@ class OtrosAdaptadoresPersistenciaTest {
     @DisplayName("mantenimientos: buscarPorId devuelve la view o vacío")
     void buscarMantenimiento() {
         // Arrange
-        Equipo equipo = equipos.guardar(Equipo.nuevo("CAM-071", tipos.buscarPorId(1L).orElseThrow(),
-                new BigDecimal("260.0"), Datos.AHORA));
-        Mantenimiento guardado = mantenimientos.guardar(Mantenimiento.registrarPara(equipo, null, Datos.AHORA));
+        Equipo equipo = equipos.saveAndFlush(nuevoEquipo("CAM-071", "260.0"));
+        Mantenimiento guardado = mantenimientos.guardar(
+                Mantenimiento.registrarPara(equipo.getId(), equipo.getHorometro(), null, Datos.AHORA));
 
         // Act
         Optional<MantenimientoView> existente = mantenimientos.buscarPorId(guardado.getId());
@@ -90,14 +91,5 @@ class OtrosAdaptadoresPersistenciaTest {
         assertThat(guardado.getId()).isNotNull();
         assertThat(encontrado).get().extracting(Usuario::getRol).isEqualTo(Rol.OPERADOR);
         assertThat(inexistente).isEmpty();
-    }
-
-    @Test
-    @DisplayName("BD: no deja guardar un horómetro menor al del último mantenimiento")
-    void checkHorometroMayorOIgual() {
-        // Act + Assert
-        assertThatThrownBy(() -> jdbc.update(
-                "insert into equipo (codigo, tipo_id, horometro, horometro_ultimo_mant) values ('BAD-001', 1, 10.0, 20.0)"))
-                .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

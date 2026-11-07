@@ -1,18 +1,17 @@
 package com.mineria.equipos.application.usecase;
 
+import java.math.BigDecimal;
 import java.time.Clock;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
-import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
+import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.application.port.out.MantenimientoQueryPort;
 import com.mineria.equipos.application.port.out.MantenimientoRepositoryPort;
 import com.mineria.equipos.application.view.MantenimientoView;
 import com.mineria.equipos.shared.exception.DomainException;
-import com.mineria.equipos.shared.exception.EquipoNotFoundException;
-import com.mineria.equipos.domain.model.Equipo;
 import com.mineria.equipos.domain.model.Mantenimiento;
 
 import lombok.RequiredArgsConstructor;
@@ -27,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class RegistrarMantenimientoService implements RegistrarMantenimientoUseCase {
 
-    private final EquipoRepositoryPort equipoRepository;
+    private final EquipoService equipoService;
     private final MantenimientoRepositoryPort mantenimientoRepository;
     private final MantenimientoQueryPort mantenimientoQuery;
     private final Clock clock;
@@ -36,13 +35,11 @@ public class RegistrarMantenimientoService implements RegistrarMantenimientoUseC
     @Transactional
     public MantenimientoView registrar(Comando comando) {
         try {
-            Equipo equipo = equipoRepository.buscarPorId(comando.equipoId())
-                    .orElseThrow(() -> new EquipoNotFoundException(comando.equipoId()));
-
-            // El historial guarda el horómetro actual; luego el ciclo vuelve a empezar desde ese valor
+            // El módulo equipo reinicia el ciclo (dentro de esta misma transacción) y devuelve el horómetro actual,
+            // que es el que queda guardado en el historial
+            BigDecimal horometro = equipoService.reiniciarCiclo(comando.equipoId());
             Mantenimiento guardado = mantenimientoRepository.guardar(
-                    Mantenimiento.registrarPara(equipo, comando.notas(), clock.instant()));
-            equipoRepository.guardar(equipo.reiniciarCicloMantenimiento());
+                    Mantenimiento.registrarPara(comando.equipoId(), horometro, comando.notas(), clock.instant()));
 
             log.info("Mantenimiento registrado: equipoId={}, horometro={}",
                     comando.equipoId(), guardado.getHorometroAlRegistrar());

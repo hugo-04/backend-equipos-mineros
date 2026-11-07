@@ -14,7 +14,6 @@ import org.springframework.test.context.ActiveProfiles;
 import com.mineria.equipos.shared.exception.ErrorResponseFactory;
 import com.mineria.equipos.shared.exception.GlobalExceptionHandler;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.AuthWebMapperImpl;
-import com.mineria.equipos.infrastructure.adapter.in.web.mapper.EquipoWebMapperImpl;
 import com.mineria.equipos.infrastructure.adapter.in.web.mapper.MantenimientoWebMapperImpl;
 import com.mineria.equipos.shared.config.ApplicationConfig;
 import com.mineria.equipos.shared.config.CorsConfig;
@@ -34,7 +33,7 @@ import com.mineria.equipos.infrastructure.security.SecurityErrorHandlers;
 @Import({
         SecurityConfig.class, SecurityErrorHandlers.class, JwtService.class, CorsConfig.class,
         ApplicationConfig.class, ErrorResponseFactory.class, GlobalExceptionHandler.class,
-        EquipoWebMapperImpl.class, MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class
+        MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class
 })
 public @interface ControllerTest {
 

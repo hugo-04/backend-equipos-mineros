@@ -11,13 +11,9 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
-import com.mineria.equipos.infrastructure.adapter.out.persistence.EquipoPersistenceAdapter;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.MantenimientoPersistenceAdapter;
-import com.mineria.equipos.infrastructure.adapter.out.persistence.TipoEquipoPersistenceAdapter;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.UsuarioPersistenceAdapter;
-import com.mineria.equipos.infrastructure.adapter.out.persistence.mapper.EquipoPersistenceMapperImpl;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.mapper.MantenimientoPersistenceMapperImpl;
-import com.mineria.equipos.infrastructure.adapter.out.persistence.mapper.TipoEquipoPersistenceMapperImpl;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.mapper.UsuarioPersistenceMapperImpl;
 
 /**
@@ -32,9 +28,7 @@ import com.mineria.equipos.infrastructure.adapter.out.persistence.mapper.Usuario
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @ActiveProfiles("test")
 @Import({
-        EquipoPersistenceAdapter.class, TipoEquipoPersistenceAdapter.class,
         MantenimientoPersistenceAdapter.class, UsuarioPersistenceAdapter.class,
-        EquipoPersistenceMapperImpl.class, TipoEquipoPersistenceMapperImpl.class,
         MantenimientoPersistenceMapperImpl.class, UsuarioPersistenceMapperImpl.class
 })
 public @interface PersistenciaTest {

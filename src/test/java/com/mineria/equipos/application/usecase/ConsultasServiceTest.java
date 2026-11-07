@@ -2,6 +2,7 @@ package com.mineria.equipos.application.usecase;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -14,63 +15,31 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
+import com.mineria.equipos.equipo.service.EquipoService;
 import com.mineria.equipos.application.port.out.MantenimientoQueryPort;
-import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.MantenimientoView;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.testsupport.Datos;
 
-/** Pruebas de los casos de uso de solo lectura (equipos, tipos y mantenimientos). */
+/** Pruebas del caso de uso de solo lectura del historial de mantenimientos. */
 @ExtendWith(MockitoExtension.class)
 class ConsultasServiceTest {
 
     @Mock
-    private EquipoViewAssembler assembler;
-    @Mock
-    private EquipoRepositoryPort equipoRepository;
+    private EquipoService equipoService;
     @Mock
     private MantenimientoQueryPort mantenimientoQuery;
-
-    @Test
-    @DisplayName("ConsultarEquipos.listar: devuelve lo que arma el ensamblador")
-    void listarEquipos() {
-        // Arrange
-        List<EquipoView> vistas = List.of(Datos.equipoView(1L, "CAM-001", "10", "0", 250));
-        when(assembler.todos()).thenReturn(vistas);
-
-        // Act
-        List<EquipoView> resultado = new ConsultarEquiposService(assembler).listar();
-
-        // Assert
-        assertThat(resultado).isEqualTo(vistas);
-    }
-
-    @Test
-    @DisplayName("ConsultarEquipos.obtener: devuelve el equipo pedido")
-    void obtenerEquipo() {
-        // Arrange
-        EquipoView vista = Datos.equipoView(1L, "CAM-001", "10", "0", 250);
-        when(assembler.porId(1L)).thenReturn(vista);
-
-        // Act
-        EquipoView resultado = new ConsultarEquiposService(assembler).obtener(1L);
-
-        // Assert
-        assertThat(resultado).isSameAs(vista);
-    }
 
     @Test
     @DisplayName("ConsultarMantenimientos: devuelve el historial de un equipo que existe")
     void historialDeEquipoExistente() {
         // Arrange
         List<MantenimientoView> historial = List.of(Datos.mantenimientoView(1L, 4L, "300.0"));
-        when(equipoRepository.existePorId(4L)).thenReturn(true);
         when(mantenimientoQuery.listarPorEquipo(4L)).thenReturn(historial);
 
         // Act
         List<MantenimientoView> resultado =
-                new ConsultarMantenimientosService(equipoRepository, mantenimientoQuery).listarPorEquipo(4L);
+                new ConsultarMantenimientosService(equipoService, mantenimientoQuery).listarPorEquipo(4L);
 
         // Assert
         assertThat(resultado).isEqualTo(historial);
@@ -80,8 +49,8 @@ class ConsultasServiceTest {
     @DisplayName("ConsultarMantenimientos: 404 (no lista vacía) si el equipo no existe")
     void historialDeEquipoInexistente() {
         // Arrange
-        when(equipoRepository.existePorId(4L)).thenReturn(false);
-        ConsultarMantenimientosService service = new ConsultarMantenimientosService(equipoRepository, mantenimientoQuery);
+        doThrow(new EquipoNotFoundException(4L)).when(equipoService).verificarExiste(4L);
+        ConsultarMantenimientosService service = new ConsultarMantenimientosService(equipoService, mantenimientoQuery);
 
         // Act + Assert
         assertThatThrownBy(() -> service.listarPorEquipo(4L)).isInstanceOf(EquipoNotFoundException.class);
