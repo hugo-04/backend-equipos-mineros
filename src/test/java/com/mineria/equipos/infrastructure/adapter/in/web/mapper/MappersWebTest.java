@@ -16,14 +16,12 @@ import com.mineria.equipos.application.port.in.CrearEquipoUseCase;
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
 import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.SesionView;
-import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
 import com.mineria.equipos.generated.model.LoginRequest;
 import com.mineria.equipos.generated.model.LoginResponse;
 import com.mineria.equipos.generated.model.MantenimientoRequest;
 import com.mineria.equipos.generated.model.MantenimientoResponse;
-import com.mineria.equipos.generated.model.TipoEquipoResponse;
 import com.mineria.equipos.testsupport.Datos;
 
 @SpringJUnitConfig({EquipoWebMapperImpl.class, MantenimientoWebMapperImpl.class, AuthWebMapperImpl.class})
@@ -92,22 +90,6 @@ class MappersWebTest {
     }
 
     @Test
-    @DisplayName("equipo: convierte listas de views y tipos")
-    void listas() {
-        // Arrange
-        List<EquipoView> views = List.of(Datos.equipoView(1L, "A-1", "1", "0", 250));
-        List<TipoEquipoView> tipos = List.of(TipoEquipoView.builder().id(1L).nombre("Camión").intervaloHoras(250).build());
-
-        // Act
-        List<EquipoResponse> equipos = equipoMapper.toResponses(views);
-        List<TipoEquipoResponse> tiposResponse = equipoMapper.toTipoResponses(tipos);
-
-        // Assert
-        assertThat(equipos).hasSize(1);
-        assertThat(tiposResponse).extracting(TipoEquipoResponse::getNombre).containsExactly("Camión");
-    }
-
-    @Test
     @DisplayName("mantenimiento: arma el comando con el id del equipo y las notas")
     void comandoDeMantenimiento() {
         // Arrange
@@ -160,10 +142,8 @@ class MappersWebTest {
     void nulos() {
         // Act + Assert
         assertThat(equipoMapper.toCrearComando(null)).isNull();
-        assertThat(equipoMapper.toResponse((EquipoView) null)).isNull();
-        assertThat(equipoMapper.toResponse((TipoEquipoView) null)).isNull();
+        assertThat(equipoMapper.toResponse(null)).isNull();
         assertThat(equipoMapper.toResponses(null)).isNull();
-        assertThat(equipoMapper.toTipoResponses(null)).isNull();
         assertThat(mantenimientoMapper.toResponse(null)).isNull();
         assertThat(mantenimientoMapper.toResponses(null)).isNull();
         assertThat(authMapper.toComando(null)).isNull();

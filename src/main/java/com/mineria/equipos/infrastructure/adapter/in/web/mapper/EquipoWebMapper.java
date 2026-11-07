@@ -8,10 +8,8 @@ import org.mapstruct.Mapping;
 import com.mineria.equipos.application.port.in.ActualizarEquipoUseCase;
 import com.mineria.equipos.application.port.in.CrearEquipoUseCase;
 import com.mineria.equipos.application.view.EquipoView;
-import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.generated.model.EquipoRequest;
 import com.mineria.equipos.generated.model.EquipoResponse;
-import com.mineria.equipos.generated.model.TipoEquipoResponse;
 
 /** Convierte entre los DTOs generados por OpenAPI y los comandos/views de la capa de aplicación. */
 @Mapper
@@ -29,8 +27,4 @@ public interface EquipoWebMapper {
     EquipoResponse toResponse(EquipoView view);
 
     List<EquipoResponse> toResponses(List<EquipoView> views);
-
-    TipoEquipoResponse toResponse(TipoEquipoView view);
-
-    List<TipoEquipoResponse> toTipoResponses(List<TipoEquipoView> views);
 }

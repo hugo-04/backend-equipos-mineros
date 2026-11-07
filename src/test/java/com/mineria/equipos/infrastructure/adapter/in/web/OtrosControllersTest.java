@@ -19,10 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.mineria.equipos.application.port.in.AutenticarUsuarioUseCase;
 import com.mineria.equipos.application.port.in.ConsultarMantenimientosUseCase;
-import com.mineria.equipos.application.port.in.ConsultarTiposUseCase;
 import com.mineria.equipos.application.port.in.RegistrarMantenimientoUseCase;
 import com.mineria.equipos.application.view.SesionView;
-import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.shared.exception.CredencialesInvalidasException;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.domain.model.Rol;
@@ -31,7 +29,7 @@ import com.mineria.equipos.testsupport.Datos;
 import com.mineria.equipos.testsupport.Tokens;
 
 /** Controllers de login, health, tipos y mantenimientos. */
-@ControllerTest({AuthController.class, TiposController.class, MantenimientosController.class})
+@ControllerTest({AuthController.class, MantenimientosController.class})
 class OtrosControllersTest {
 
     @Autowired
@@ -39,8 +37,6 @@ class OtrosControllersTest {
 
     @MockitoBean
     private AutenticarUsuarioUseCase autenticarUsuario;
-    @MockitoBean
-    private ConsultarTiposUseCase consultarTipos;
     @MockitoBean
     private RegistrarMantenimientoUseCase registrarMantenimiento;
     @MockitoBean
@@ -94,30 +90,6 @@ class OtrosControllersTest {
         mockMvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("VALIDACION_FALLIDA"));
-    }
-
-    // ---------- /tipos ----------
-
-    @Test
-    @DisplayName("GET /tipos: 200 con el catálogo")
-    void tipos() throws Exception {
-        // Arrange
-        when(consultarTipos.listar()).thenReturn(List.of(
-                TipoEquipoView.builder().id(1L).nombre("Camión").intervaloHoras(250).build(),
-                TipoEquipoView.builder().id(2L).nombre("Excavadora").intervaloHoras(500).build()));
-
-        // Act + Assert
-        mockMvc.perform(get("/tipos").header(HttpHeaders.AUTHORIZATION, token()))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2))
-                .andExpect(jsonPath("$[1].intervaloHoras").value(500));
-    }
-
-    @Test
-    @DisplayName("GET /tipos: 401 sin token")
-    void tiposSinToken() throws Exception {
-        // Act + Assert
-        mockMvc.perform(get("/tipos")).andExpect(status().isUnauthorized());
     }
 
     // ---------- /equipos/{id}/mantenimientos ----------

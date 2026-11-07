@@ -3,6 +3,8 @@ package com.mineria.equipos.infrastructure.adapter.out.persistence.entity;
 import java.math.BigDecimal;
 import java.time.Instant;
 
+import com.mineria.equipos.tipo.entity.TipoEquipo;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -33,7 +35,7 @@ public class EquipoEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "tipo_id", nullable = false)
-    private TipoEquipoEntity tipo;
+    private TipoEquipo tipo;
 
     @Column(nullable = false, precision = 10, scale = 1)
     private BigDecimal horometro;

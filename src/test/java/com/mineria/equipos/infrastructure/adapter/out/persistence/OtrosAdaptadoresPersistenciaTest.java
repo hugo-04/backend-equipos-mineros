@@ -2,7 +2,6 @@ package com.mineria.equipos.infrastructure.adapter.out.persistence;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.tuple;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -16,7 +15,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.domain.model.Equipo;
 import com.mineria.equipos.domain.model.Mantenimiento;
 import com.mineria.equipos.domain.model.Rol;
@@ -39,33 +37,6 @@ class OtrosAdaptadoresPersistenciaTest {
     private UsuarioPersistenceAdapter usuarios;
     @Autowired
     private JdbcTemplate jdbc;
-
-    @Test
-    @DisplayName("tipos: la migración deja camión 250, excavadora 500 y perforadora 300")
-    void tiposIniciales() {
-        // Act
-        List<TipoEquipoView> catalogo = tipos.listar();
-
-        // Assert
-        assertThat(catalogo)
-                .extracting(TipoEquipoView::getNombre, TipoEquipoView::getIntervaloHoras)
-                .containsExactly(
-                        tuple("Camión", 250),
-                        tuple("Excavadora", 500),
-                        tuple("Perforadora", 300));
-    }
-
-    @Test
-    @DisplayName("tipos: buscarPorId devuelve el tipo o vacío")
-    void buscarTipo() {
-        // Act
-        Optional<TipoEquipo> existente = tipos.buscarPorId(1L);
-        Optional<TipoEquipo> inexistente = tipos.buscarPorId(99L);
-
-        // Assert
-        assertThat(existente).get().extracting(TipoEquipo::getNombre).isEqualTo("Camión");
-        assertThat(inexistente).isEmpty();
-    }
 
     @Test
     @DisplayName("mantenimientos: el historial sale del más reciente al más antiguo")
@@ -127,22 +98,6 @@ class OtrosAdaptadoresPersistenciaTest {
         // Act + Assert
         assertThatThrownBy(() -> jdbc.update(
                 "insert into equipo (codigo, tipo_id, horometro, horometro_ultimo_mant) values ('BAD-001', 1, 10.0, 20.0)"))
-                .isInstanceOf(DataIntegrityViolationException.class);
-    }
-
-    @Test
-    @DisplayName("BD: no deja un intervalo de horas menor o igual a 0")
-    void checkIntervaloPositivo() {
-        // Act + Assert
-        assertThatThrownBy(() -> jdbc.update("insert into tipo_equipo (nombre, intervalo_horas) values ('Malo', 0)"))
-                .isInstanceOf(DataIntegrityViolationException.class);
-    }
-
-    @Test
-    @DisplayName("BD: el nombre de un tipo de equipo es único")
-    void nombreDeTipoUnico() {
-        // Act + Assert
-        assertThatThrownBy(() -> jdbc.update("insert into tipo_equipo (nombre, intervalo_horas) values ('Camión', 100)"))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 }

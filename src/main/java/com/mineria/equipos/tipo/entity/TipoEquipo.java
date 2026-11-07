@@ -1,4 +1,4 @@
-package com.mineria.equipos.infrastructure.adapter.out.persistence.entity;
+package com.mineria.equipos.tipo.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,13 +10,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-/** Fila de la tabla tipo_equipo. Solo la usa la capa de persistencia; el dominio trabaja con TipoEquipo. */
+/**
+ * Categoría de un equipo (camión, excavadora, perforadora...), fila de la tabla tipo_equipo.
+ * Define cada cuántas horas de uso el equipo necesita mantenimiento.
+ */
 @Getter
 @Setter
 @NoArgsConstructor
 @Entity
 @Table(name = "tipo_equipo")
-public class TipoEquipoEntity {
+public class TipoEquipo {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

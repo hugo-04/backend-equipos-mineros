@@ -16,12 +16,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.mineria.equipos.application.port.in.ConsultarTiposUseCase;
+import com.mineria.equipos.tipo.service.TipoService;
 import com.mineria.equipos.generated.model.HealthResponse;
 import com.mineria.equipos.domain.model.Rol;
 import com.mineria.equipos.shared.health.HealthController;
 import com.mineria.equipos.shared.health.HealthService;
-import com.mineria.equipos.infrastructure.adapter.in.web.TiposController;
+import com.mineria.equipos.tipo.controller.TipoController;
 import com.mineria.equipos.testsupport.ControllerTest;
 import com.mineria.equipos.testsupport.Tokens;
 
@@ -29,14 +29,14 @@ import com.mineria.equipos.testsupport.Tokens;
  * Seguridad de punta a punta sobre la cadena real de filtros: token válido, expirado, malformado,
  * con firma falsa o ausente, endpoints públicos y CORS.
  */
-@ControllerTest({TiposController.class, HealthController.class})
+@ControllerTest({TipoController.class, HealthController.class})
 class SeguridadHttpTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ConsultarTiposUseCase consultarTipos;
+    private TipoService tipoService;
     @MockitoBean
     private HealthService healthService;
 
@@ -44,7 +44,7 @@ class SeguridadHttpTest {
     @DisplayName("token válido: pasa")
     void tokenValido() throws Exception {
         // Arrange
-        when(consultarTipos.listar()).thenReturn(List.of());
+        when(tipoService.listar()).thenReturn(List.of());
 
         // Act + Assert
         mockMvc.perform(get("/tipos").header(HttpHeaders.AUTHORIZATION, Tokens.bearer(Tokens.valido("admin", Rol.ADMIN))))

@@ -12,7 +12,6 @@ import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
 
 import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.domain.model.Equipo;
 import com.mineria.equipos.domain.model.Mantenimiento;
 import com.mineria.equipos.domain.model.Rol;
@@ -20,11 +19,9 @@ import com.mineria.equipos.domain.model.TipoEquipo;
 import com.mineria.equipos.domain.model.Usuario;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.entity.EquipoEntity;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.entity.MantenimientoEntity;
-import com.mineria.equipos.infrastructure.adapter.out.persistence.entity.TipoEquipoEntity;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.entity.UsuarioEntity;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.repository.EquipoProjection;
 import com.mineria.equipos.infrastructure.adapter.out.persistence.repository.MantenimientoProjection;
-import com.mineria.equipos.infrastructure.adapter.out.persistence.repository.TipoEquipoProjection;
 import com.mineria.equipos.testsupport.Datos;
 
 @SpringJUnitConfig({EquipoPersistenceMapperImpl.class, TipoEquipoPersistenceMapperImpl.class,
@@ -75,7 +72,6 @@ class MappersPersistenciaTest {
 
         // Assert
         assertThat(view.getTipoNombre()).isEqualTo("Camión");
-        assertThat(view.getIntervaloHoras()).isEqualTo(250);
         assertThat(view.isRequiereMantenimiento()).isFalse();
         assertThat(view.getEstado()).isNull();
     }
@@ -100,37 +96,15 @@ class MappersPersistenciaTest {
     }
 
     @Test
-    @DisplayName("tipo: dominio <-> entidad y proyección -> view")
+    @DisplayName("tipo: dominio <-> entidad")
     void tipo() {
         // Arrange
         TipoEquipo dominio = Datos.camion();
-        TipoEquipoProjection proyeccion = new TipoEquipoProjection() {
-            public Long getId() { return 1L; }
-            public String getNombre() { return "Camión"; }
-            public Integer getIntervaloHoras() { return 250; }
-        };
-
         // Act
-        TipoEquipoEntity entidad = tipoMapper.toEntity(dominio);
-        TipoEquipoView view = tipoMapper.toView(proyeccion);
+        com.mineria.equipos.tipo.entity.TipoEquipo entidad = tipoMapper.toEntity(dominio);
 
         // Assert
         assertThat(tipoMapper.toDomain(entidad)).isEqualTo(dominio);
-        assertThat(view.getIntervaloHoras()).isEqualTo(250);
-    }
-
-    @Test
-    @DisplayName("tipo: una proyección sin intervalo no rompe el mapeo")
-    void tipoSinIntervalo() {
-        // Arrange
-        TipoEquipoProjection proyeccion = new TipoEquipoProjection() {
-            public Long getId() { return 1L; }
-            public String getNombre() { return "Sin intervalo"; }
-            public Integer getIntervaloHoras() { return null; }
-        };
-
-        // Act + Assert
-        assertThat(tipoMapper.toView(proyeccion).getIntervaloHoras()).isZero();
     }
 
     @Test
@@ -179,7 +153,6 @@ class MappersPersistenciaTest {
         assertThat(equipoMapper.toView(null)).isNull();
         assertThat(tipoMapper.toDomain(null)).isNull();
         assertThat(tipoMapper.toEntity(null)).isNull();
-        assertThat(tipoMapper.toView(null)).isNull();
         assertThat(mantenimientoMapper.toDomain(null)).isNull();
         assertThat(mantenimientoMapper.toEntity(null)).isNull();
         assertThat(mantenimientoMapper.toView(null)).isNull();

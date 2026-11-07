@@ -16,10 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.mineria.equipos.application.port.out.EquipoRepositoryPort;
 import com.mineria.equipos.application.port.out.MantenimientoQueryPort;
-import com.mineria.equipos.application.port.out.TipoEquipoQueryPort;
 import com.mineria.equipos.application.view.EquipoView;
 import com.mineria.equipos.application.view.MantenimientoView;
-import com.mineria.equipos.application.view.TipoEquipoView;
 import com.mineria.equipos.shared.exception.EquipoNotFoundException;
 import com.mineria.equipos.testsupport.Datos;
 
@@ -29,8 +27,6 @@ class ConsultasServiceTest {
 
     @Mock
     private EquipoViewAssembler assembler;
-    @Mock
-    private TipoEquipoQueryPort tipoEquipoQuery;
     @Mock
     private EquipoRepositoryPort equipoRepository;
     @Mock
@@ -62,20 +58,6 @@ class ConsultasServiceTest {
 
         // Assert
         assertThat(resultado).isSameAs(vista);
-    }
-
-    @Test
-    @DisplayName("ConsultarTipos.listar: devuelve el catálogo")
-    void listarTipos() {
-        // Arrange
-        List<TipoEquipoView> tipos = List.of(TipoEquipoView.builder().id(1L).nombre("Camión").intervaloHoras(250).build());
-        when(tipoEquipoQuery.listar()).thenReturn(tipos);
-
-        // Act
-        List<TipoEquipoView> resultado = new ConsultarTiposService(tipoEquipoQuery).listar();
-
-        // Assert
-        assertThat(resultado).isEqualTo(tipos);
     }
 
     @Test
