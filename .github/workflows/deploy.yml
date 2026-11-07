@@ -1,0 +1,125 @@
+name: Deploy
+
+# Despliega en cada push a main. También se puede lanzar a mano (workflow_dispatch) y,
+# con simulate_failure=true, DEMOSTRAR el rollback automático.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: >-
+          Simula que /health falla tras desplegar, para demostrar el rollback a la versión
+          anterior. Desactivado por defecto: úsalo solo para la demostración.
+        type: boolean
+        default: false
+
+# Nunca dos despliegues a la vez; el segundo espera al primero
+concurrency:
+  group: deploy-produccion
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write   # publicar la imagen en GHCR
+
+jobs:
+  test:
+    name: 1. Pruebas y cobertura
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: mvn -B verify
+      - name: Probar deploy.sh con el hosting simulado
+        run: ./scripts/test/deploy_test.sh
+
+  e2e:
+    name: 2. End-to-end con docker compose
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Credenciales desechables solo para este job: nada sale de los secrets de producción
+      - name: Preparar .env de prueba
+        run: |
+          {
+            echo "DB_USER=equipos"
+            echo "DB_PASSWORD=$(openssl rand -hex 16)"
+            echo "JWT_SECRET=$(openssl rand -hex 32)"
+            echo "JWT_EXPIRATION_MINUTES=60"
+            echo "ADMIN_USER=admin-e2e"
+            echo "ADMIN_PASSWORD=$(openssl rand -hex 16)"
+            echo "CORS_ALLOWED_ORIGINS=http://localhost:3000"
+            echo "PORT=8080"
+            echo "APP_VERSION=e2e"
+          } > .env
+          grep -E '^(ADMIN_USER|ADMIN_PASSWORD)=' .env | sed 's/^/E2E_/' >> "$GITHUB_ENV"
+
+      - name: Levantar backend + MySQL
+        run: docker compose up --build -d
+
+      - name: Esperar a que /health responda
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8080/health; then echo; exit 0; fi
+            echo "esperando al backend ($i/60)..."; sleep 3
+          done
+          docker compose logs backend
+          exit 1
+
+      - name: Ejecutar pruebas e2e
+        run: ADMIN_USER="$E2E_ADMIN_USER" ADMIN_PASSWORD="$E2E_ADMIN_PASSWORD" ./scripts/e2e.sh
+
+      - name: Logs del backend (si algo falló)
+        if: failure()
+        run: docker compose logs backend db
+
+      - name: Apagar
+        if: always()
+        run: docker compose down -v
+
+  deploy:
+    name: 3. Deploy (./deploy.sh)
+    needs: e2e
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # A partir de aquí solo se PREPARA el entorno; toda la lógica de despliegue está en deploy.sh
+      - name: Instalar la CLI de Railway
+        run: npm install -g @railway/cli
+
+      - name: Iniciar sesión en GHCR (registro de imágenes)
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Calcular el nombre de la imagen (en minúsculas)
+        run: echo "REGISTRY_IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Desplegar (si hace rollback, este paso termina en rojo)
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_SERVICE: ${{ secrets.RAILWAY_SERVICE }}
+          APP_URL: ${{ secrets.APP_URL }}
+          # Solo se activa si se lanza a mano con simulate_failure=true
+          SIMULATE_FAILURE: ${{ inputs.simulate_failure && 'health' || '' }}
+          # Railway tarda en construir y arrancar: más margen que el valor por defecto
+          HEALTH_RETRIES: '24'
+          HEALTH_INTERVAL: '5'
+        run: ./deploy.sh
