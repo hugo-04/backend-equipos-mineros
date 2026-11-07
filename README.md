@@ -35,57 +35,61 @@ ArchUnit, JaCoCo.
 
 ## Arquitectura
 
-Clean Architecture (hexagonal: puertos y adaptadores). **Regla de dependencia: las dependencias apuntan
-siempre hacia adentro** (`infrastructure → application → domain`). Los tests de ArchUnit
-([`ArquitecturaTest`](src/test/java/com/mineria/equipos/arquitectura/ArquitecturaTest.java)) hacen fallar el build si se rompe.
+**Monolito modular**: una sola aplicación, un solo despliegue y una sola base de datos, dividida en **módulos por
+funcionalidad**. Cada módulo tiene sus propias subcarpetas por tipo de clase. Las reglas entre módulos las vigila
+[`ArquitecturaTest`](src/test/java/com/mineria/equipos/arquitectura/ArquitecturaTest.java) (ArchUnit): si alguien las rompe, el build falla.
 
 ```
-                  ┌──────────────────────────────────────────────────────────────┐
-                  │  INFRASTRUCTURE  (conoce Spring, JPA, HTTP, JWT, MySQL)       │
-                  │                                                              │
-   HTTP ────────► │  adapter/in/web        controllers + mappers + errores       │
-                  │  security · config     JWT, CORS, wiring                     │
-                  │         │                                                    │
-                  │         ▼  llaman a                                          │
-                  │  ┌────────────────────────────────────────────────────────┐  │
-                  │  │  APPLICATION   (casos de uso; sin JPA ni HTTP)         │  │
-                  │  │   port/in   ← interfaces de casos de uso               │  │
-                  │  │   usecase   ← implementaciones (@Transactional)        │  │
-                  │  │   view      ← modelos de lectura (GET)                 │  │
-                  │  │   port/out  ← interfaces que necesita la aplicación    │  │
-                  │  │      │                                                 │  │
-                  │  │      ▼  usa                                            │  │
-                  │  │  ┌──────────────────────────────────────────────────┐  │  │
-                  │  │  │  DOMAIN  (Java puro: sin Spring, JPA ni web)     │  │  │
-                  │  │  │   model · rule (MantenimientoPolicy) · exception │  │  │
-                  │  │  └──────────────────────────────────────────────────┘  │  │
-                  │  └────────────────────────────────────────────────────────┘  │
-                  │         ▲  implementan port/out                              │
-   MySQL ◄─────── │  adapter/out/persistence   entidades JPA, repos, proyecciones│
-                  └──────────────────────────────────────────────────────────────┘
+com.mineria.equipos
+├── equipo/
+│   ├── controller/        EquipoController (implementa la interfaz generada por OpenAPI)
+│   ├── service/           EquipoService (interfaz)
+│   │   └── impl/          EquipoServiceImpl
+│   ├── repository/        EquipoRepository
+│   │   └── projection/    EquipoProjection (lecturas con JOIN al tipo, sin N+1)
+│   ├── entity/            Equipo (JPA + reglas: el horómetro no baja, reinicio del ciclo)
+│   ├── mapper/            EquipoMapper (MapStruct)
+│   └── policy/            MantenimientoPolicy (Strategy) · IntervaloMantenimientoPolicy · EstadoMantenimiento
+├── tipo/                  controller · service/impl · repository(+projection) · entity · mapper
+├── mantenimiento/         controller · service/impl · repository(+projection) · entity · mapper
+├── auth/                  controller · service/impl · repository · entity (Usuario, Rol) · mapper
+│   └── security/          JwtService, filtro JWT, SecurityConfig, UsuarioDetailsService, 401/403, admin inicial
+├── shared/
+│   ├── exception/         GlobalExceptionHandler + TODAS las excepciones (+ ErrorResponseFactory)
+│   ├── config/            AppProperties, CORS, beans comunes (Clock)
+│   └── health/            /health (controller, service, mapper)
+└── EquiposApplication
 ```
 
-| Capa | Paquete (`com.mineria.equipos`) | Contiene |
+Los DTOs los genera el plugin de OpenAPI en `target/generated-sources` con paquetes fijos
+(`com.mineria.equipos.generated.api` y `com.mineria.equipos.generated.model`); no se escriben ni se copian a mano.
+
+| Módulo | Responsabilidad | Depende de (por la interfaz de su `service`) |
 |---|---|---|
-| Dominio | `domain.model` | `Equipo`, `TipoEquipo`, `Mantenimiento`, `Usuario`: POJOs inmutables con su comportamiento |
-| | `domain.rule` | `MantenimientoPolicy` (Strategy) e `IntervaloMantenimientoPolicy` |
-| | `domain.exception` | `EquipoNotFoundException`, `TipoEquipoNotFoundException`, `CodigoDuplicadoException`, `HorometroInvalidoException`, `CredencialesInvalidasException` |
-| Aplicación | `application.port.in` | Casos de uso como **interfaces** (`CrearEquipoUseCase`, `RegistrarMantenimientoUseCase`...) |
-| | `application.port.out` | Puertos de salida como **interfaces** (`EquipoRepositoryPort`, `EquipoQueryPort`, `PasswordHasherPort`...) |
-| | `application.usecase` | Implementaciones: orquestan dominio + puertos |
-| | `application.view` | Read models que devuelven los GET (`EquipoView`...) |
-| Infraestructura | `infrastructure.adapter.in.web` | Controllers que **implementan las interfaces generadas** por OpenAPI; solo traducen y delegan |
-| | `...web.mapper` / `...web.error` | MapStruct DTO ↔ comandos/views · `GlobalExceptionHandler` |
-| | `infrastructure.adapter.out.persistence` | Adaptadores de los puertos de salida, `entity/` (JPA), `repository/` (Spring Data + proyecciones), `mapper/` |
-| | `infrastructure.security` · `infrastructure.config` | JWT, filtro, `SecurityConfig`, CORS, propiedades |
+| `tipo` | Catálogo de tipos y su intervalo de mantenimiento | — |
+| `equipo` | Alta, consulta, edición y baja de equipos; calcula si requieren mantenimiento | `tipo` |
+| `mantenimiento` | Historial; registrar un mantenimiento reinicia el ciclo del equipo | `equipo` |
+| `auth` | Login, JWT, roles y seguridad HTTP | — |
+| `shared` | Excepciones, configuración y health, comunes a todos | — |
 
-Cómo viaja una petición: `Controller (DTO generado) → MapStruct → Comando → UseCase (port/in) → modelo de dominio
-+ puertos (port/out) → adaptador de persistencia → entidad JPA`. Las **entidades JPA nunca salen** de
-`adapter/out/persistence`, y los GET usan **proyecciones** (con `JOIN` al tipo, sin N+1) que se convierten a `view`.
+**Reglas (verificadas por ArchUnit):**
 
-Patrones usados (con criterio, sin sobreingeniería): **Strategy** (`MantenimientoPolicy`), **Factory**
-(`Equipo.nuevo`, `Mantenimiento.registrarPara`), **Builder** (Lombok), **Mapper** (MapStruct, cero mapeo manual),
-**Ports & Adapters**, y objetos de dominio inmutables (cada cambio devuelve una copia).
+1. Un módulo usa a otro **solo a través de la interfaz de su `service`**. Ejemplo: `MantenimientoServiceImpl` llama a
+   `EquipoService.reiniciarCiclo(id)` dentro de la misma transacción. Nunca usa el repositorio, la entidad, la proyección,
+   el mapper ni la política de otro módulo.
+2. **Sin ciclos**: `mantenimiento` depende de `equipo` y `equipo` depende de `tipo`; nunca al revés.
+3. El **controller** depende solo de interfaces de `service`: nunca de repositorios, entidades ni mappers.
+4. Las **excepciones** viven solo en `shared/exception`, no repartidas por módulo.
+5. Como controller, service e impl están en paquetes distintos, las clases son `public`: el control de acceso lo hace
+   ArchUnit, no la visibilidad de Java.
+
+Cómo viaja una petición: `Controller → Service (interfaz) → ServiceImpl → Repository → entidad JPA`. Los `GET` leen con
+**proyecciones** (una consulta con `JOIN`, sin N+1) y el `Mapper` (MapStruct) las convierte al DTO del contrato; los
+servicios de escritura trabajan con la entidad. `requiereMantenimiento` y `estado` no se guardan: el `EquipoMapper`
+los calcula al consultar con la `MantenimientoPolicy`.
+
+Patrones usados (con criterio, sin sobreingeniería): **Strategy** (`MantenimientoPolicy`), **Factory** (`Mantenimiento.registrarPara`),
+**Builder** (Lombok) y **Mapper** (MapStruct, cero mapeo manual).
 
 ## Modelo de datos
 
@@ -222,20 +226,23 @@ mvn test          # pruebas
 mvn verify        # pruebas + cobertura: FALLA si instrucciones o ramas < 90%   (o: make verify)
 ```
 
-Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,7 % de instrucciones y 98,6 % de ramas**
-(202 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI), la clase `Application` y las entidades JPA triviales.
-Las dos únicas ramas sin cubrir son verificaciones de `null` inalcanzables que genera MapStruct.
+Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,8 % de instrucciones y 95,9 % de ramas**
+(212 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI) y la clase `EquiposApplication`; las entidades sí
+cuentan porque tienen reglas de negocio. Las ramas sin cubrir son verificaciones de `null` inalcanzables que genera MapStruct.
+Las pruebas replican la misma estructura de paquetes que el código (`src/test/java/...`).
 
 | Qué | Dónde |
 |---|---|
-| Reglas de negocio y casos de uso (JUnit 5 + Mockito, patrón **AAA**: Arrange/Act/Assert) | `domain/**`, `application/usecase/**` |
-| Regla de mantenimiento: justo debajo, exacto, por encima del intervalo y reinicio del ciclo | `ReglaMantenimientoTest` |
-| Controllers con MockMvc + seguridad real, validaciones del contrato, `GlobalExceptionHandler` | `infrastructure/adapter/in/web/**` |
-| JWT: válido, expirado, malformado, firma falsa, ausente; CORS | `infrastructure/security/**` |
-| Mappers (incluidos nulos) | `*Mapper*Test` |
-| Repositorios con Flyway real | `infrastructure/adapter/out/persistence/**` |
-| Flujo completo (login → CRUD → mantenimiento → baja) | `integracion/FlujoCompletoIntegrationTest` |
-| Arquitectura (regla de dependencia) | `arquitectura/ArquitecturaTest` |
+| Reglas de negocio en la entidad: el horómetro no baja, reinicio del ciclo | `equipo/entity/EquipoTest` |
+| Regla de mantenimiento: justo debajo, exacto, por encima del intervalo y reinicio del ciclo | `equipo/policy/ReglaMantenimientoTest` |
+| Servicios (JUnit 5 + Mockito, patrón **AAA**: Arrange/Act/Assert): duplicados, horómetro inválido, no encontrado | `*/service/impl/*ServiceImplTest` |
+| Controllers con MockMvc + seguridad real, validaciones del contrato | `*/controller/*ControllerTest` |
+| `GlobalExceptionHandler` y excepciones | `shared/exception/**` |
+| JWT: válido, expirado, malformado, firma falsa, ausente; CORS | `auth/security/**` |
+| Mappers (incluidos nulos) | `*/mapper/*MapperTest` |
+| Repositorios con Flyway real | `*/repository/*RepositoryTest` |
+| Flujo completo (login → CRUD → mantenimiento → baja) y rollback conjunto equipo + mantenimiento | `integracion/**` |
+| Arquitectura de módulos (acceso entre módulos, ciclos, controllers, excepciones) | `arquitectura/ArquitecturaTest` |
 | Script e2e contra `docker compose` | `scripts/e2e.sh` (`make e2e`) |
 | `deploy.sh` y su rollback con hosting simulado | `scripts/test/deploy_test.sh` (`make test-deploy`) |
 
@@ -365,6 +372,24 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
   contenedor (imagen, compose, `/health`, migraciones) se probó con Docker y MySQL reales. **El comando `railway up --ci` contra un
   proyecto Railway real no se ha podido ejecutar en este entorno**: antes del primer despliegue real conviene correrlo una vez y
   ajustar `HEALTH_RETRIES` según lo que tarde Railway en construir y arrancar.
+- **Monolito modular (refactor de estructura, sin cambios de comportamiento).** Se pasó de capas hexagonales a módulos por
+  funcionalidad. Desaparecen el dominio separado, los puertos, los adaptadores y los *views*: cada módulo tiene su `entity`
+  JPA (con las reglas que dependen solo de sí misma), su `repository`, su `service` (interfaz + `impl`) y su `mapper`.
+  El contrato `openapi.yaml`, las migraciones y las respuestas de la API no cambiaron.
+- **DTOs en un solo paquete generado.** Se generan con una única ejecución del plugin en
+  `com.mineria.equipos.generated.api|model`. Separarlos por módulo exigiría varias ejecuciones del plugin sobre el mismo
+  contrato y complicaría el build sin aportar nada; se dejan juntos. Los servicios devuelven esos DTOs ya mapeados.
+- **`equipo` guarda `tipoId`, no una relación JPA con `tipo`.** Así no depende de la entidad del módulo `tipo`: para validar un tipo
+  usa `TipoService.verificarExiste`, y las lecturas unen el tipo con un `JOIN` por `tipo_id` dentro de la consulta de la
+  proyección (la base de datos es única). Es un acoplamiento de datos de solo lectura, no de código Java.
+- **`EquipoService.reiniciarCiclo(id)` devuelve el horómetro** en el que reinició el ciclo: así `mantenimiento` guarda ese mismo
+  valor en el historial sin leer la entidad de `equipo`. Todo corre en la misma transacción y se prueba el rollback conjunto.
+- **Carpetas fuera de la lista del enunciado:** `shared/health` (el `/health` no pertenece a ningún módulo de negocio) y
+  `ErrorResponseFactory` dentro de `shared/exception` (la comparten el handler global y los 401/403 de seguridad).
+  `TokenJwtException` se movió a `shared/exception` porque las excepciones no pueden definirse fuera de esa carpeta.
+- **Login con `UserDetailsService` y `PasswordEncoder`** de Spring Security (`UsuarioDetailsService`), en lugar de un hasher propio.
+  El error sigue siendo el mismo para usuario inexistente y clave incorrecta.
+- **La cobertura ya no excluye las entidades**: ahora tienen reglas de negocio y se prueban.
 - El volumen de `docker compose` y el nombre del proyecto (`equipos-mineros`) son propios de este repo.
 
 ## Uso de IA
