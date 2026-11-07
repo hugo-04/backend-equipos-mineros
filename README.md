@@ -399,19 +399,9 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
 
 ## Uso de IA
 
-Para este proyecto se usó **Claude Code** (Anthropic, modelo **Claude Sonnet 5.5**), un asistente de programación que corre en la terminal.
-Se le enviaron **prompts estructurados** (con el stack, la arquitectura, el modelo de datos, las reglas de negocio, el contrato y los
-**criterios de aceptación** definidos de antemano) y, a partir de ellos, Claude Code:
+Se usó **Claude Code** (Anthropic, modelo **Claude Sonnet 5.5**). Se le enviaron **prompts estructurados** con los requisitos
+y los **criterios de aceptación** definidos, y con ellos Claude Code:
 
-- **Creó el README** (arquitectura, modelo de datos, cómo levantarlo, variables de entorno, despliegue, rollback, decisiones y supuestos).
-- **Creó todo el CI/CD y la automatización de las pruebas:** los workflows de GitHub Actions (`ci.yml` y `deploy.yml`, con los jobs
-  encadenados `test` → `e2e` → `deploy`), el script de despliegue con rollback (`deploy.sh`), el script e2e (`scripts/e2e.sh`) y las
-  pruebas del propio script de despliegue con un hosting simulado.
-- **Creó las pruebas unitarias y de integración según los criterios de aceptación definidos:** la regla de mantenimiento (justo
-  debajo, exactamente en el intervalo, por encima y reinicio del ciclo), los casos felices y no felices de servicios, controllers,
-  manejo de errores, seguridad/JWT (válido, expirado, malformado, ausente) y mappers, las pruebas de arquitectura con ArchUnit y la
-  cobertura mínima del 90 % exigida por JaCoCo en `mvn verify`.
-- Escribió también el código, el contrato OpenAPI, las migraciones, el Docker y la reorganización a monolito modular.
-
-El trabajo fue iterativo, en commits pequeños, ejecutando el build y las pruebas reales (incluidos MySQL 8 y Docker) después de cada
-etapa. Todo el código y la configuración deben ser revisados por una persona antes de llevarlos a producción.
+- **Creó el README.**
+- **Creó todo el CI/CD** y la automatización de las pruebas (workflows de GitHub Actions, script de despliegue con rollback y pruebas e2e).
+- **Creó las pruebas unitarias** según los criterios de aceptación definidos.
