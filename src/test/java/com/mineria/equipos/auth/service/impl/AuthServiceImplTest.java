@@ -3,7 +3,11 @@ package com.mineria.equipos.auth.service.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -46,7 +50,7 @@ class AuthServiceImplTest {
     private UsuarioRepository usuarioRepository;
 
     // La codificación y el JWT son los reales: así se prueba que la clave se compara contra su hash BCrypt
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final PasswordEncoder passwordEncoder = spy(new BCryptPasswordEncoder());
     private AuthServiceImpl service;
 
     @BeforeEach
@@ -58,8 +62,9 @@ class AuthServiceImplTest {
     }
 
     private void usuarioExistente(String username, String passwordEnClaro) {
+        String hash = passwordEncoder.encode(passwordEnClaro);
         when(userDetailsService.loadUserByUsername(username)).thenReturn(
-                User.withUsername(username).password(passwordEncoder.encode(passwordEnClaro)).roles("ADMIN").build());
+                User.withUsername(username).password(hash).roles("ADMIN").build());
     }
 
     // ---------- login ----------
@@ -100,6 +105,37 @@ class AuthServiceImplTest {
         assertThatThrownBy(() -> service.login(new LoginRequest("fantasma", "x")))
                 .isInstanceOf(CredencialesInvalidasException.class)
                 .hasMessage("Usuario o contraseña incorrectos");
+    }
+
+    @Test
+    @DisplayName("login: con un usuario inexistente también se hace el trabajo de BCrypt (mismo tiempo que una clave incorrecta)")
+    void usuarioInexistenteGastaElMismoTiempo() {
+        // Arrange
+        when(userDetailsService.loadUserByUsername("fantasma")).thenThrow(new UsernameNotFoundException("no existe"));
+
+        // Act
+        assertThatThrownBy(() -> service.login(new LoginRequest("fantasma", "cualquiera")))
+                .isInstanceOf(CredencialesInvalidasException.class);
+
+        // Assert: se comparó la clave contra un hash señuelo, igual que con un usuario real
+        verify(passwordEncoder).matches(eq("cualquiera"), anyString());
+    }
+
+    @Test
+    @DisplayName("login: el hash señuelo se calcula una sola vez, no en cada intento")
+    void hashSenueloSeReutiliza() {
+        // Arrange
+        when(userDetailsService.loadUserByUsername("fantasma")).thenThrow(new UsernameNotFoundException("no existe"));
+
+        // Act
+        for (int i = 0; i < 3; i++) {
+            assertThatThrownBy(() -> service.login(new LoginRequest("fantasma", "x")))
+                    .isInstanceOf(CredencialesInvalidasException.class);
+        }
+
+        // Assert
+        verify(passwordEncoder, times(1)).encode(anyString());
+        verify(passwordEncoder, times(3)).matches(eq("x"), anyString());
     }
 
     @Test

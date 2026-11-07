@@ -1,5 +1,7 @@
 package com.mineria.equipos.auth.service.impl;
 
+import java.util.UUID;
+
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -37,11 +39,13 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final AuthMapper mapper;
 
+    private volatile String hashSenuelo;
+
     @Override
     @Transactional(readOnly = true)
     public LoginResponse login(LoginRequest request) {
         try {
-            UserDetails usuario = cargarUsuario(request.getUsername());
+            UserDetails usuario = cargarUsuario(request.getUsername(), request.getPassword());
             if (!passwordEncoder.matches(request.getPassword(), usuario.getPassword())) {
                 throw new CredencialesInvalidasException();
             }
@@ -74,12 +78,24 @@ public class AuthServiceImpl implements AuthService {
         return true;
     }
 
-    private UserDetails cargarUsuario(String username) {
+    private UserDetails cargarUsuario(String username, String password) {
         try {
             return userDetailsService.loadUserByUsername(username);
         } catch (UsernameNotFoundException e) {
-            // Mismo error que una clave incorrecta: no revela si el usuario existe
+            // Mismo error que una clave incorrecta y, además, el mismo tiempo: se hace el mismo trabajo de BCrypt
+            // contra un hash señuelo, así medir cuánto tarda el login no revela qué usuarios existen
+            passwordEncoder.matches(password, hashSenuelo());
             throw new CredencialesInvalidasException();
         }
+    }
+
+    /** Hash BCrypt de una clave aleatoria, con el mismo costo que los hashes reales. Se calcula una sola vez. */
+    private String hashSenuelo() {
+        String hash = hashSenuelo;
+        if (hash == null) {
+            hash = passwordEncoder.encode(UUID.randomUUID().toString());
+            hashSenuelo = hash;
+        }
+        return hash;
     }
 }
