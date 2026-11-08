@@ -102,20 +102,33 @@ request POST /equipos "{\"codigo\":\"$CODIGO\",\"tipoId\":1,\"horometro\":249.9}
 verificar "crear equipo -> 201" 201 "$STATUS"
 ID="$(campo id)"
 verificar "249.9 h de 250 -> no requiere mantenimiento" false "$(campo requiereMantenimiento)"
+verificar "249.9 h de 250 -> faltan 0.1 h" 0.1 "$(campo horasRestantes)"
 request POST /equipos "{\"codigo\":\"$CODIGO\",\"tipoId\":1,\"horometro\":1}"
 verificar "código duplicado -> 409" 409 "$STATUS"
 request GET /equipos/999999999
 verificar "equipo inexistente -> 404" 404 "$STATUS"
-request PUT "/equipos/$ID" "{\"codigo\":\"$CODIGO\",\"tipoId\":1,\"horometro\":250.0}"
+request PUT "/equipos/$ID" "{\"codigo\":\"$CODIGO\",\"horometro\":250.0}"
 verificar "editar a 250 h -> 200" 200 "$STATUS"
 verificar "250 h (justo el intervalo) -> requiere mantenimiento" true "$(campo requiereMantenimiento)"
-request PUT "/equipos/$ID" "{\"codigo\":\"$CODIGO\",\"tipoId\":1,\"horometro\":100.0}"
+verificar "250 h -> 0 horas restantes" 0.0 "$(campo horasRestantes)"
+request PUT "/equipos/$ID" "{\"codigo\":\"$CODIGO\",\"horometro\":100.0}"
 verificar "bajar el horómetro -> 422" 422 "$STATUS"
+contiene "código HOROMETRO_NO_PUEDE_BAJAR" '"code":"HOROMETRO_NO_PUEDE_BAJAR"'
+request PUT "/equipos/$ID" "{\"codigo\":\"$CODIGO\",\"tipoId\":2,\"horometro\":260.0}"
+verificar "editar enviando tipoId -> 400 (el tipo no se cambia)" 400 "$STATUS"
+request GET "/equipos/$ID"
+contiene "el tipo sigue siendo el de origen (camión)" '"tipo":{"id":1,'
 request POST "/equipos/$ID/mantenimientos" '{"notas":"Cambio de aceite (e2e)"}'
 verificar "registrar mantenimiento -> 201" 201 "$STATUS"
 request GET "/equipos/$ID"
 verificar "tras el mantenimiento el ciclo se reinicia" false "$(campo requiereMantenimiento)"
+verificar "el horómetro no cambia al registrar el mantenimiento" 250.0 "$(campo horometro)"
 verificar "horometroUltimoMant = 250.0" 250.0 "$(campo horometroUltimoMant)"
+verificar "horas desde el último mantenimiento = 0" 0.0 "$(campo horasDesdeUltimoMant)"
+request POST "/equipos/$ID/mantenimientos" '{}'
+verificar "mantenimiento sin notas -> 201" 201 "$STATUS"
+request POST "/equipos/$ID/mantenimientos" '{"notas":"   "}'
+verificar "mantenimiento con notas en blanco -> 201" 201 "$STATUS"
 request GET "/equipos/$ID/mantenimientos"
 verificar "historial -> 200" 200 "$STATUS"
 contiene "historial con la nota" "Cambio de aceite (e2e)"
