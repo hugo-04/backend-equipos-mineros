@@ -143,7 +143,7 @@ Contrato completo y navegable en Swagger UI: `http://localhost:8080/swagger-ui.h
 | `GET /health` | pública | `{status:"UP",version}`; **503** si la BD no responde |
 | `GET /tipos` | JWT | Catálogo de tipos (paginado) |
 | `GET /equipos` · `POST /equipos` | JWT | Listar (paginado, con estado de mantenimiento) · crear |
-| `GET /equipos/{id}` · `PUT /equipos/{id}` | JWT | Consultar · editar (el horómetro no baja) |
+| `GET /equipos/{id}` · `PUT /equipos/{id}` | JWT | Consultar · editar solo `codigo` y `horometro` (el horómetro no baja y el tipo no se cambia) |
 | `DELETE /equipos/{id}` | JWT con rol **ADMIN** | Elimina el equipo y su historial |
 | `POST /equipos/{id}/mantenimientos` | JWT | Registra el mantenimiento y reinicia el ciclo |
 | `GET /equipos/{id}/mantenimientos` | JWT | Historial (paginado, el más reciente primero) |
@@ -152,8 +152,11 @@ Contrato completo y navegable en Swagger UI: `http://localhost:8080/swagger-ui.h
 Usan `Pageable`/`Page` de Spring Data y la respuesta es una clase propia generada del contrato:
 `{page, size, totalElements, totalPages, first, last, content[]}`.
 
-**Validaciones** (definidas en el contrato y generadas): `codigo` 3–30 caracteres `^[A-Za-z0-9-]+$`; `tipoId` entero > 0 y
-existente; `horometro` entre 0 y 999999.9 con **un decimal** como máximo; `notas` ≤ 500; `id` del path > 0; propiedades
+Cada equipo (en la lista y en el detalle) trae lo que se calcula al consultar: `horasDesdeUltimoMant`, `horasRestantes`,
+`requiereMantenimiento` y el `estado` legible. Nada de eso se guarda en la base.
+
+**Validaciones** (definidas en el contrato y generadas): `codigo` 3–30 caracteres `^[A-Za-z0-9-]+$`; `tipoId` (solo al crear) entero > 0 y
+existente; el `PUT` solo admite `codigo` y `horometro`, así que un `tipoId` ahí da `400`; `horometro` entre 0 y 999999.9 con **un decimal** como máximo; `notas` ≤ 500; `id` del path > 0; propiedades
 desconocidas y JSON malformado se rechazan; un número enviado como texto (`"12"`) también.
 
 **Errores:** todos usan `ErrorResponse`: `timestamp`, `status`, `error`, `code`, `message`, `path`, `traceId`, `details[{field,reason}]`. El `traceId` es el mismo de la cabecera `X-Trace-Id` y de los logs de esa petición.
@@ -166,7 +169,7 @@ desconocidas y JSON malformado se rechazan; un número enviado como texto (`"12"
 | 404 | `EQUIPO_NO_ENCONTRADO`, `TIPO_EQUIPO_NO_ENCONTRADO`, `RUTA_NO_ENCONTRADA` |
 | 409 | `CODIGO_DUPLICADO`, `CONFLICTO_DE_DATOS` |
 | 413 | `CUERPO_DEMASIADO_GRANDE` (más de 16 KB) |
-| 422 | `HOROMETRO_INVALIDO` |
+| 422 | `HOROMETRO_NO_PUEDE_BAJAR`, `TIPO_NO_MODIFICABLE`, `HOROMETRO_INVALIDO` |
 | 429 | `DEMASIADOS_INTENTOS` (login; cabecera `Retry-After`) |
 | 500 | `ERROR_INTERNO` (sin trazas ni datos internos) |
 
@@ -386,11 +389,25 @@ con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test
   pasaron a `tools.jackson`; el `exclude` de `UserDetailsServiceAutoConfiguration` apunta al paquete nuevo; y se quitaron los *pins* de Tomcat y
   Jackson que había puesto por CVE de la rama 3.5. `jjwt-jackson` sigue usando Jackson 2 por dentro, convive sin problema.
 - **Fechas** (`creadoEn`, `fecha` del mantenimiento) en UTC con fecha y hora (`DATETIME`); en el JSON salen en ISO-8601.
+- **El horómetro es un acumulado y nunca baja**, como el odómetro de un auto. Lo actualiza quien edita el equipo y, si manda un valor
+  menor al actual, recibe `422 HOROMETRO_NO_PUEDE_BAJAR`. Lo que se reinicia con un mantenimiento no es el horómetro, es el ciclo.
+- **El estado se calcula en cada consulta, no se guarda.** Horas desde el último mantenimiento = `horometro - horometro_ultimo_mant`; requiere
+  mantenimiento cuando eso llega (igual o más) al intervalo del tipo. `horasRestantes` es lo que falta y nunca baja de 0. La cuenta vive en un
+  solo lugar (`MantenimientoPolicy`) y la usan la lista y el detalle.
 - **`horometro_ultimo_mant` arranca en 0**, como indica el modelo. Un equipo dado de alta con un horómetro ≥ su intervalo
   aparece de inmediato como "Requiere mantenimiento".
-- **Registrar mantenimiento**: el body es obligatorio pero `notas` es opcional (`{}` es válido). Se permite registrarlo aunque
-  el equipo todavía no lo requiera.
-- **`tipoId` inexistente al crear o editar → 404** (`TIPO_EQUIPO_NO_ENCONTRADO`), siguiendo la lista de excepciones del enunciado.
+- **Registrar un mantenimiento no toca el horómetro:** en una sola transacción guarda el historial con el horómetro de ese momento y deja
+  `horometro_ultimo_mant = horometro`, así las horas desde el último mantenimiento vuelven a 0. Se permite registrarlo aunque el equipo
+  todavía no lo requiera.
+- **Las `notas` del mantenimiento son opcionales** (`{}` es un body válido): si vienen vacías o solo con espacios se guardan como nulas, y el
+  máximo es 500 caracteres.
+- **El tipo de un equipo no se puede cambiar** una vez creado, por trazabilidad: el estado y los mantenimientos se rigen por el intervalo de ese
+  tipo. Si alguien se equivocó, se elimina el equipo y se crea otro. El `PUT` solo acepta `codigo` y `horometro` (un `tipoId` da `400` por el
+  contrato), el servicio rechaza cualquier cambio con `422 TIPO_NO_MODIFICABLE` y la columna `tipo_id` está marcada como no actualizable en JPA.
+- **El código es único y se puede editar** (`409 CODIGO_DUPLICADO` si ya es de otro equipo).
+- **`tipoId` inexistente al crear → 404** (`TIPO_EQUIPO_NO_ENCONTRADO`), siguiendo la lista de excepciones del enunciado.
+- **Orden de despliegue:** el `PUT` ya no acepta `tipoId`, así que el frontend anterior dejaría de poder editar equipos. Se despliega primero el
+  backend y enseguida el frontend, con sus scripts de siempre; hasta que el frontend nuevo esté arriba, la edición falla con `400`.
 - **Roles:** `ADMIN` y `OPERADOR`. Solo `ADMIN` puede borrar equipos (da sentido al 403). El único usuario que se crea solo es el
   admin inicial; no hay endpoints de gestión de usuarios (un `OPERADOR` se agrega por SQL).
 - **`/health` incluye `version`** además de `status`: el despliegue lo usa para validar que corre la versión nueva y para saber a qué
