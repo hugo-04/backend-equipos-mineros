@@ -256,8 +256,8 @@ mvn test          # pruebas
 mvn verify        # pruebas + cobertura: FALLA si instrucciones o ramas < 90%   (o: make verify)
 ```
 
-Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,7 % de instrucciones y 92,5 % de ramas**
-(340 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI) y la clase `EquiposApplication`; las entidades sí
+Reporte HTML: `target/site/jacoco/index.html`. **Resultado actual: 99,7 % de instrucciones y 92,8 % de ramas**
+(371 pruebas). Se excluye del cálculo solo lo generado (código OpenAPI) y la clase `EquiposApplication`; las entidades sí
 cuentan. Las ramas sin cubrir son verificaciones de `null` inalcanzables que genera MapStruct.
 Las pruebas replican la misma estructura de paquetes que el código (`src/test/java/...`).
 
@@ -298,7 +298,7 @@ GitHub Actions no reimplementa nada: prepara el entorno y ejecuta `./deploy.sh`.
 **Códigos de salida:** `0` ok · `1` error antes de tocar producción · `2` falló y el **rollback se ejecutó** (el despliegue
 se reporta como fallido) · `3` falló y no había versión previa (primer despliegue) · `4` **el propio rollback falló**.
 
-**Variables de `deploy.sh`:** `RAILWAY_TOKEN`, `RAILWAY_SERVICE`, `APP_URL`, `REGISTRY_IMAGE` (obligatorias);
+**Variables de `deploy.sh`:** `RAILWAY_TOKEN` (o `RAILWAY_API_TOKEN` con `RAILWAY_PROJECT` y `RAILWAY_ENVIRONMENT`), `RAILWAY_SERVICE`, `APP_URL`, `REGISTRY_IMAGE` (obligatorias);
 `RAILWAY_ENVIRONMENT`, `HEALTH_RETRIES` (10), `HEALTH_INTERVAL` (5 s), `HEALTH_TIMEOUT` (5 s), `DEPLOY_STATE_DIR`, y
 `SIMULATE_FAILURE` (solo `health`; **desactivado por defecto**, ver [Rollback](#rollback)), `PUSH_RETRIES` (3) y `PUSH_INTERVAL` (10 s).
 
@@ -311,18 +311,37 @@ así que `deploy.sh` sube una carpeta con un `Dockerfile` de una línea (`FROM g
 **Desplegar y volver atrás son la misma operación con distinto tag**, por eso no hay dos caminos que mantener.
 Permite volver a una versión anterior porque **todas las imágenes quedan publicadas con su SHA** en el registro.
 
-Configuración única:
+Configuración única (así quedó el entorno real):
 
-1. En Railway: proyecto con un servicio MySQL y un servicio para el backend. En el backend define las variables de la tabla de
-   arriba (`DB_URL`/`DB_USER`/`DB_PASSWORD` apuntando al MySQL de Railway, `JWT_SECRET`, `ADMIN_*`, `CORS_ALLOWED_ORIGINS`) y, en
-   *Settings → Deploy*, el **Healthcheck Path** `/health`. Railway inyecta `PORT`.
-2. Crea un **Project Token** (entorno `production`) y la URL pública del servicio. Si la cuenta de Railway no puede crearlo (pide verificar la cuenta),
-   sirve un **token de cuenta o de workspace** en `RAILWAY_API_TOKEN`: como ese token no apunta a un proyecto, `deploy.sh` también necesita
-   `RAILWAY_PROJECT` (el id del proyecto) y `RAILWAY_ENVIRONMENT`, y los pasa a `railway up` con `--project` y `--environment`.
-3. En GitHub → *Settings → Secrets and variables → Actions*: `RAILWAY_TOKEN`, `RAILWAY_SERVICE` (nombre del servicio) y `APP_URL`.
-   El workflow usa el token de proyecto; para usar el de cuenta o de workspace hay que cambiar esa variable en `deploy.yml` por `RAILWAY_API_TOKEN`, `RAILWAY_PROJECT` y `RAILWAY_ENVIRONMENT`.
-4. La primera vez que se publique la imagen, haz **público** el paquete en GHCR (*Packages → Package settings → Change visibility*) para
-   que Railway pueda descargarla. La imagen no contiene secretos (todo llega por variables de entorno).
+1. **Repos en GitHub**, uno para el backend y otro para el frontend, sin organización (cuenta personal). El workflow usa el `GITHUB_TOKEN` de cada
+   corrida para publicar la imagen en GHCR (`ghcr.io/<usuario>/<repo>`), así que no hace falta ningún token de GitHub para eso.
+2. **Proyecto en Railway con tres servicios**: MySQL (plantilla de base de datos) y dos *servicios vacíos* (`backend` y `frontend`). No se conecta ningún repo: la imagen
+   llega con `railway up`. En cada servicio de aplicación, *Settings → Networking → Generate Domain* (puerto `8080` el backend, `3000` el frontend).
+3. **Variables del backend** (pestaña *Variables*). Las tres de la base son *referencias* al servicio MySQL (que debe llamarse exactamente `MySQL`):
+
+   | Variable | Valor |
+   |---|---|
+   | `DB_URL` | `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?useSSL=false&allowPublicKeyRetrieval=true` |
+   | `DB_USER` / `DB_PASSWORD` | `${{MySQL.MYSQLUSER}}` / `${{MySQL.MYSQLPASSWORD}}` |
+   | `JWT_SECRET`, `ADMIN_USER`, `ADMIN_PASSWORD` | los de siempre (`openssl rand -hex 32` y `openssl rand -base64 18`) |
+   | `CORS_ALLOWED_ORIGINS` | `https://` + dominio del frontend, **sin `/` al final** |
+   | `PORT` | `8080` |
+
+   **Ninguna variable puede llevar espacios al principio ni al final.** Un espacio sobrante en `DB_USER` hizo que MySQL rechazara la conexión
+   (`Access denied for user 'root '`, código 1045). Además, en *Settings → Deploy*, el **Healthcheck Path** `/health`.
+4. **Token de Railway.** Lo ideal es un **Project Token** del entorno `production` (*Project Settings → Tokens*), que va en `RAILWAY_TOKEN`. Las cuentas de prueba no
+   pueden crearlo hasta verificarse (conectando GitHub en [railway.com/verify](https://railway.com/verify)). Si no se pudiera, `deploy.sh` acepta un **token de
+   cuenta o de workspace** en `RAILWAY_API_TOKEN`: como ese token no apunta a un proyecto, también necesita `RAILWAY_PROJECT` (id del proyecto) y `RAILWAY_ENVIRONMENT`,
+   que pasa a `railway up` con `--project` y `--environment`.
+5. **Secretos del repo** (*Settings → Secrets and variables → Actions → New repository secret*): `RAILWAY_TOKEN`, `RAILWAY_SERVICE` (nombre exacto del servicio) y `APP_URL`
+   (`https://` + dominio, sin `/` al final). El workflow usa el token de proyecto; para usar el de cuenta o de workspace hay que cambiar esa variable en `deploy.yml` por
+   `RAILWAY_API_TOKEN`, `RAILWAY_PROJECT` y `RAILWAY_ENVIRONMENT`.
+6. **El primer despliegue.** El paquete de GHCR nace al primer push; si Railway no pudiera descargarlo, hay que hacerlo **público** (*Packages → Package settings →
+   Change visibility*). La imagen no contiene secretos (todo llega por variables de entorno). Como no hay versión previa, si ese primer despliegue falla termina con código `3` y sin
+   rollback; tras corregir la causa se relanza con *Re-run failed jobs*, y si la versión ya quedó arriba y sana el script lo detecta y termina en verde sin redesplegar.
+
+**Verificado en el entorno real:** el backend (`4220ed1`) y el frontend (`c4bd8e7`) se desplegaron en Railway desde GitHub Actions y respondieron `UP` con su versión. La demostración
+del rollback en Railway (con `simulate_failure`) está descrita abajo y todavía no se ha ejecutado en vivo; su lógica sí está probada con el hosting simulado.
 
 ### CI/CD (GitHub Actions)
 
@@ -335,12 +354,26 @@ Configuración única:
   → `deploy` (solo si `e2e` pasó; ejecuta `./deploy.sh`). Si el script hace rollback, **el job queda en rojo**.
   Los secretos salen solo de GitHub Secrets y `concurrency` evita dos despliegues a la vez.
 
+### Problemas que aparecieron al desplegar y cómo se resolvieron
+
+| Síntoma | Causa | Solución |
+|---|---|---|
+| `error from registry: denied` en `docker push` (las capas sí se suben) | Docker publica la imagen como índice OCI con un manifiesto de atestación, y GHCR rechaza ponerle la etiqueta | `docker build --provenance=false --sbom=false`; además `docker push` se reintenta (`PUSH_RETRIES`) |
+| `Indexing... prefix not found` en `railway up` | La CLI toma como raíz del archivo el directorio donde corre, y la carpeta temporal con el `Dockerfile` queda fuera | `railway up <carpeta> --path-as-root` |
+| `Access denied for user 'root '` al arrancar (código 1045) | Espacio sobrante al final de `DB_USER` en las variables de Railway | Volver a escribir la variable sin espacios |
+| `Permission denied` al ejecutar un script en el CI | En Windows los archivos se versionan sin permiso de ejecución | `git update-index --chmod=+x <script>` |
+| `FlujoCompletoIntegrationTest` fallaba solo en GitHub | Las pruebas de integración comparten la base y el orden de las clases cambia por sistema operativo; el listado paginado (20) dejaba fuera al equipo recién creado | La prueba pide `size=100` |
+| `Internal server error. Correlation ID: …` sin que arranque ningún job | Incidente de GitHub Actions | Esperar a que GitHub se recupere y relanzar |
+
 ## Rollback
 
 **Qué pasa cuando algo sale mal:** el paso 4 guarda el tag que está en producción; si el paso 5 (el comando de despliegue) o el 6
 (`/health` no queda `UP` con la versión nueva en el tiempo previsto) fallan, el paso 7 **redespliega ese tag**, vuelve a verificar
 `/health`, imprime `ROLLBACK ejecutado a <tag>` y termina con código `2`. Si el rollback también falla, el error es muy visible y
 el código es `4`. Si era el primer despliegue, dice claramente que no hay a qué volver (código `3`).
+
+**Qué no hace.** Vuelve a la imagen anterior y comprueba que responda, pero **no revierte el commit en Git** (`main` sigue con el código malo hasta que se suba un arreglo o un `git revert`),
+no borra la imagen publicada en GHCR, no deshace las migraciones de Flyway (ver más abajo) y no coordina backend y frontend: cada repo hace su rollback por separado.
 
 **Migraciones compatibles hacia atrás (expandir/contraer).** Flyway no deshace migraciones, y al arrancar la versión nueva su
 migración ya se aplicó aunque después se haga rollback. Por eso **cada migración debe poder convivir con la versión anterior del código**:
@@ -384,7 +417,8 @@ La simulación apunta la verificación de la versión nueva a una URL que no exi
 simulados (un hosting en memoria que sabe qué tag está corriendo): éxito → `0`; falla de health → rollback al tag previo y `!= 0`;
 falla simulada; falla del comando de despliegue; versión nueva que no toma el tráfico; **falla del rollback → código propio `4`**;
 variable o herramienta faltante → `1` con mensaje claro; **segunda ejecución seguida sin cambios no redespliega**; primer despliegue
-con y sin éxito; que no se filtre el token. Corre en `ci.yml` y en el job `test` de `deploy.yml`.
+con y sin éxito; que no se filtre el token; que un `docker push` que falla una vez se reintente y que la imagen se construya con `--provenance=false`; y el despliegue con un token de cuenta
+(`--project`/`--environment`) o con uno de proyecto (sin `--project`), siempre con `--path-as-root`. **20 casos.** Corre en `ci.yml` y en el job `test` de `deploy.yml`.
 
 ## Decisiones y supuestos
 
