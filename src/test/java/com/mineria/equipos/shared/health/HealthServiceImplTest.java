@@ -6,6 +6,9 @@ import static org.mockito.Mockito.when;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.List;
 
 import javax.sql.DataSource;
@@ -31,17 +34,20 @@ class HealthServiceImplTest {
     @Mock
     private Connection conexion;
 
+    private static final Instant ARRANQUE = Instant.parse("2026-11-09T18:49:43Z");
+
     private HealthServiceImpl service;
 
     @BeforeEach
     void setUp() {
         AppProperties propiedades = new AppProperties("abc1234", new AppProperties.Jwt("x".repeat(32), 30),
                 new AppProperties.Admin("a", "b"), new AppProperties.Cors(List.of("http://localhost:3000")));
-        service = new HealthServiceImpl(dataSource, new HealthMapperImpl(), propiedades);
+        service = new HealthServiceImpl(dataSource, new HealthMapperImpl(), propiedades,
+                Clock.fixed(ARRANQUE, ZoneOffset.UTC));
     }
 
     @Test
-    @DisplayName("UP con la versión: la conexión es válida y se cierra")
+    @DisplayName("UP con la versión y el momento de arranque: la conexión es válida y se cierra")
     void disponible() throws SQLException {
         // Arrange
         when(dataSource.getConnection()).thenReturn(conexion);
@@ -53,6 +59,7 @@ class HealthServiceImplTest {
         // Assert
         assertThat(respuesta.getStatus()).isEqualTo(HealthResponse.StatusEnum.UP);
         assertThat(respuesta.getVersion()).isEqualTo("abc1234");
+        assertThat(respuesta.getIniciadoEn()).isEqualTo(ARRANQUE);
         verify(conexion).close();
     }
 

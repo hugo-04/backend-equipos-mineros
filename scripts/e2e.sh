@@ -58,6 +58,7 @@ echo "[1] Health"
 request GET /health "" no
 verificar "GET /health responde 200" 200 "$STATUS"
 verificar "status UP" UP "$(campo status)"
+contiene "health informa desde cuándo corre (iniciadoEn)" '"iniciadoEn"'
 
 echo "[2] Seguridad"
 request GET /equipos "" no
