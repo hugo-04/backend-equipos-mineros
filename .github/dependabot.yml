@@ -17,6 +17,12 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # El proyecto usa Java 21 (LTS), definido en el pom. Las imágenes de build (maven) y de ejecución (eclipse-temurin) llevan
+    # etiquetas flotantes (21, 21-jre-alpine) que ya reciben los parches al reconstruir, y se escanean con Trivy. Un salto de
+    # versión de Java (25, 26) es una decisión del proyecto, no una actualización automática: se hace a mano junto con el pom.
+    ignore:
+      - dependency-name: maven
+      - dependency-name: eclipse-temurin
 
   - package-ecosystem: github-actions
     directory: /
