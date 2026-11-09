@@ -314,8 +314,11 @@ Configuración única:
 1. En Railway: proyecto con un servicio MySQL y un servicio para el backend. En el backend define las variables de la tabla de
    arriba (`DB_URL`/`DB_USER`/`DB_PASSWORD` apuntando al MySQL de Railway, `JWT_SECRET`, `ADMIN_*`, `CORS_ALLOWED_ORIGINS`) y, en
    *Settings → Deploy*, el **Healthcheck Path** `/health`. Railway inyecta `PORT`.
-2. Crea un **Project Token** y la URL pública del servicio.
-3. En GitHub → *Settings → Secrets and variables → Actions*: `RAILWAY_TOKEN`, `RAILWAY_SERVICE` (nombre del servicio) y `APP_URL`.
+2. Consigue un token y la URL pública del servicio. Lo ideal es un **Project Token** (`RAILWAY_TOKEN`). Si la cuenta de Railway todavía no puede
+   crearlos (pide verificar la cuenta), sirve un **token de cuenta o de workspace** (`RAILWAY_API_TOKEN`): como ese token no apunta a un proyecto,
+   `deploy.sh` también necesita `RAILWAY_PROJECT` (el id del proyecto) y `RAILWAY_ENVIRONMENT`, y los pasa a `railway up` con `--project` y `--environment`.
+3. En GitHub → *Settings → Secrets and variables → Actions*: `RAILWAY_API_TOKEN`, `RAILWAY_PROJECT`, `RAILWAY_SERVICE` (nombre del servicio) y `APP_URL`
+   (el workflow ya fija `RAILWAY_ENVIRONMENT=production`). Con un token de proyecto bastan `RAILWAY_TOKEN`, `RAILWAY_SERVICE` y `APP_URL`.
 4. La primera vez que se publique la imagen, haz **público** el paquete en GHCR (*Packages → Package settings → Change visibility*) para
    que Railway pueda descargarla. La imagen no contiene secretos (todo llega por variables de entorno).
 
