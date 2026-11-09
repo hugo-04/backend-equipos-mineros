@@ -140,7 +140,7 @@ Contrato completo y navegable en Swagger UI: `http://localhost:8080/swagger-ui.h
 | Método y ruta | Auth | Descripción |
 |---|---|---|
 | `POST /auth/login` | pública | Devuelve el token JWT |
-| `GET /health` | pública | `{status:"UP",version}`; **503** si la BD no responde |
+| `GET /health` | pública | `{status:"UP",version,iniciadoEn}`; **503** si la BD no responde. `iniciadoEn` es cuándo arrancó la instancia: tras un despliegue (o un rollback) se ve que es la nueva |
 | `GET /tipos` | JWT | Catálogo de tipos (paginado) |
 | `GET /equipos` · `POST /equipos` | JWT | Listar (paginado, con estado de mantenimiento) · crear |
 | `GET /equipos/{id}` · `PUT /equipos/{id}` | JWT | Consultar · editar solo `codigo` y `horometro` (el horómetro no baja y el tipo no se cambia) |
@@ -200,7 +200,7 @@ Requisitos: **Java 21**, **Maven 3.9+** y MySQL 8 (o Docker).
 ```bash
 cp .env.example .env        # los secretos vienen vacíos: rellénalos (openssl rand -hex 32 para JWT_SECRET, -hex 16 para DB_PASSWORD, -base64 18 para ADMIN_PASSWORD)
 docker compose up --build   # o: make up
-curl http://localhost:8080/health      # {"status":"UP","version":"local"}
+curl http://localhost:8080/health      # {"status":"UP","iniciadoEn":"2026-11-09T19:55:15Z","version":"local"}
 docker compose down                    # conserva los datos (volumen); "down -v" los borra
 ```
 
