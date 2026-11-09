@@ -121,7 +121,9 @@ class FlujoCompletoIntegrationTest {
         mockMvc.perform(get("/tipos").header(HttpHeaders.AUTHORIZATION, bearer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[?(@.nombre=='Excavadora')].intervaloHoras").value(500));
-        mockMvc.perform(get("/equipos").header(HttpHeaders.AUTHORIZATION, bearer))
+        // Las pruebas de integración comparten la base y el orden en que corren cambia según el sistema, así que
+        // pido la página más grande para que el equipo recién creado no quede fuera de la primera de 20
+        mockMvc.perform(get("/equipos").param("size", "100").header(HttpHeaders.AUTHORIZATION, bearer))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[?(@.codigo=='EXC-INT-1')].estado").value("OK"));
     }
