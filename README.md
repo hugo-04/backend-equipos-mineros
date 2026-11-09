@@ -300,7 +300,9 @@ se reporta como fallido) · `3` falló y no había versión previa (primer despl
 
 **Variables de `deploy.sh`:** `RAILWAY_TOKEN`, `RAILWAY_SERVICE`, `APP_URL`, `REGISTRY_IMAGE` (obligatorias);
 `RAILWAY_ENVIRONMENT`, `HEALTH_RETRIES` (10), `HEALTH_INTERVAL` (5 s), `HEALTH_TIMEOUT` (5 s), `DEPLOY_STATE_DIR`, y
-`SIMULATE_FAILURE` (solo `health`; **desactivado por defecto**, ver [Rollback](#rollback)).
+`SIMULATE_FAILURE` (solo `health`; **desactivado por defecto**, ver [Rollback](#rollback)), `PUSH_RETRIES` (3) y `PUSH_INTERVAL` (10 s).
+
+La imagen se construye con `--provenance=false --sbom=false`: sin eso Docker le agrega un manifiesto de atestación y la publica como un índice OCI, y GHCR rechaza (`error from registry: denied`) ponerle la etiqueta, aunque las capas sí se suban. Además el `docker push` se reintenta (`PUSH_RETRIES`, 3 por defecto; `PUSH_INTERVAL`, 10 s) porque GHCR a veces rechaza el primer push de un paquete recién creado.
 
 ### Hosting: Railway
 
