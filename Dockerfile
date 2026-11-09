@@ -16,7 +16,7 @@ RUN mvn -B -q -DskipTests package \
     && cp target/equipos-mineros-*.jar /workspace/app.jar
 
 # Etapa 2: ejecutar con un JRE 21 liviano y sin usuario root
-FROM eclipse-temurin:21-jre-alpine@sha256:ac05c3c42b7c2f1a52c9bd52f01041fa1958231b15ebeae7420429cbc5baf474
+FROM eclipse-temurin:25-jre-alpine@sha256:e1898fd6a11fc965a994d8ace186fd3585aeb636cf8f05f47a723fcfee0b0918
 
 # El tag de la imagen (el SHA corto del commit). El /health lo devuelve y deploy.sh lo usa para saber qué versión quedó corriendo
 ARG APP_VERSION=dev
